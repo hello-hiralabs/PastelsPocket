@@ -3,7 +3,7 @@ name: Build & Deploy Pastels
 on:
   push:
     branches: [main]
-  workflow_dispatch:          # tombol jalankan manual
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -22,14 +22,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Kabelkan import & gabungkan jadi satu berkas
+      - name: Pasang dependensi build
+        run: npm install
+      - name: Kabelkan import & bangun index.html
         run: |
           node rewire.mjs
           node build.mjs
+      - name: Uji — graf modul & cakupan CSS
+        run: |
+          node esm-test.mjs
+          node css-test.mjs
       - name: Siapkan folder situs
         run: |
           mkdir -p _site
-          cp index.html _site/index.html
+          cp index.html manifest.webmanifest sw.js icon-192.png icon-512.png _site/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
