@@ -70,7 +70,7 @@ export const LocalAdapter = {
    Cara mengaktifkan dengan Supabase:
 
    1) Tambahkan di <head> index.html:
-      <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>
 
    2) Buat tabel di Supabase (SQL editor):
       create table pastels_state (
