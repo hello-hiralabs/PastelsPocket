@@ -16,9 +16,16 @@ nyata saat dikembangkan, dan digabung hanya saat mau dikirim.
 
 ```bash
 node rewire.mjs     # hitung ulang semua import dari tabel simbol
-node build.mjs      # gabungkan src/ menjadi index.html
-node esm-test.mjs   # jalankan graf modul asli di jsdom (mencari import yang kurang)
+node build.mjs      # kompilasi Tailwind + gabungkan src/ menjadi index.html
+node esm-test.mjs   # jalankan graf modul asli (mencari import yang kurang)
+node css-test.mjs   # pastikan tiap kelas di markup punya wujud di CSS
 ```
+
+Sekali saja di awal: `npm install` (butuh `tailwindcss` untuk build,
+`jsdom` untuk esm-test).
+
+Berkas yang harus diunggah ke hosting: `index.html`, `manifest.webmanifest`,
+`sw.js`, `icon-192.png`, `icon-512.png`.
 
 Untuk `dev.html` butuh server lokal, karena `file://` menolak modul:
 
@@ -118,3 +125,37 @@ aplikasi tidak mati saat jaringan hilang.
 Mau pakai Firebase? Tulis adapter ketiga dengan bentuk yang sama
 (`read`, `write`, `signIn`, `signOut`, `user`) lalu daftarkan di `DS.use()`.
 Tidak ada berkas lain yang perlu diubah.
+
+---
+
+## Perubahan terakhir (ronde amplop, reset, tema kucing)
+
+| Berkas | Yang diubah |
+|---|---|
+| `src/constants.js` | `envOfCat` dipindah keluar (dulu statis) |
+| `src/calc.js` | `envOfCat` baru: membaca `db.catEnv`, jatuh ke bawaan `CATS[].env` |
+| `src/state.js` | tambah `db.catEnv` + validasinya di `migrate()` |
+| `src/views/home.js` | kartu Amplop: penanda `data-live` untuk sinkron Rp, `<details>` dropdown kategori, tombol "Ganti" di adegan dihapus |
+| `src/views/goals.js` | kartu jembatan alokasi amplop celengan + tombol setor |
+| `src/views/header.js` | ikon kucing jadi pemicu ganti tema, sapaan pindah ke bubble |
+| `src/sheets.js` | `resetSheet()` baru; tombol Pengaturan jadi "Reset Data" |
+| `src/actions.js` | `refreshEnv()`, auto-balance persen, aksi `catenv`, `setor-alokasi`, `reset-open`, `reset-month-ask/ok`, `reset-all-ask` |
+| `src/i18n.js` | ~20 entri kamus baru |
+
+### Catatan keputusan
+
+**Persen amplop: auto-balance, bukan "kosongkan yang lain".**
+Permintaannya mengosongkan dua amplop lain jadi 0 saat satu diisi. Itu
+membuat pengisian kedua menghapus yang pertama, jadi ketiganya tidak
+akan pernah bisa terisi. Yang dipakai sekarang: dua amplop lain
+disesuaikan proporsional sehingga total selalu 100% — tujuannya sama
+(tidak bisa lewat 100) tanpa efek saling hapus.
+
+**Amplop celengan butuh satu ketukan untuk jadi saldo.**
+Alokasi amplop itu rencana, setoran itu uang yang benar-benar pindah.
+Kalau alokasi otomatis ditambahkan ke saldo celengan, saldonya jadi
+menggelembung tiap kali pengguna mengubah persen. Jadi ada kartu
+jembatan di tab Celengan yang menampilkan alokasi vs yang sudah
+tersetor, plus tombol "Setor Alokasi ke Celengan" yang membagi sisanya
+proporsional ke kebutuhan tiap celengan dan mencatatnya sebagai
+transaksi nyata.

@@ -1,1 +1,1 @@
-{"type":"module","private":true}
+{"type":"module","private":true,"devDependencies":{"jsdom":"^27.4.0","tailwindcss":"^3.4.19"},"scripts":{"build":"node rewire.mjs && node build.mjs","test":"node esm-test.mjs && node css-test.mjs"}}

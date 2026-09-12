@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#FFFDF9">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Pastels">
@@ -15,25 +17,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Shantell+Sans:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config = {
-  theme: { extend: {
-    colors: {
-      milk:'#FFFDF9', card:'#FFFDFB', edge:'#F3E7EA', ink:'#5A4E4D', soft:'#8C7F7E',
-      berry:'#FF9EAA', blush:'#FFC0D3', matcha:'#E2F0D9', leaf:'#A3C79B', butter:'#FFF3CD', lav:'#E8D8E8'
-    },
-    fontFamily: {
-      hand: ['"Shantell Sans"','"Comic Sans MS"','cursive'],
-      sans: ['"Plus Jakarta Sans"','system-ui','-apple-system','sans-serif']
-    }
-  }}
-}
-</script>
+<style>/*__TAILWIND__*/</style>
 
 <style>
   :root{
-    --ink:#5A4E4D; --edge:#F3E7EA; --soft:#8C7F7E;
+    --ink:#5A4E4D; --edge:#F3E7EA; --soft:#7E7271;
     --st: env(safe-area-inset-top, 0px);
     --sb: env(safe-area-inset-bottom, 0px);
   }
@@ -71,7 +59,29 @@ tailwind.config = {
   .amtbox:focus-within{ box-shadow:0 0 0 2.5px #FF9EAA; background:rgba(255,255,255,.45); }
   /* tombol kategori: tinggi seragam walau labelnya dua baris */
   .catbtn{ min-height:86px; justify-content:flex-start; }
-  ::placeholder{ color:#C6B6BA; }
+  ::placeholder{ color:#867B7E; }
+
+  /* ---------- peringatan jatah hampir habis ----------
+     Dipakai saat sisa jatah harian < 15%: garis bergerak + denyut lembut,
+     supaya statusnya terbaca tanpa harus membaca angkanya. */
+  .fill-alert{
+    background-image:repeating-linear-gradient(115deg,
+      rgba(255,255,255,.55) 0 8px, transparent 8px 18px) !important;
+    background-size:26px 100%;
+    animation:alertStripe 1.1s linear infinite, alertPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes alertStripe{ from{ background-position:0 0 } to{ background-position:26px 0 } }
+  @keyframes alertPulse{ 0%,100%{ filter:brightness(1) } 50%{ filter:brightness(1.12) } }
+  .alert-ring{ animation:alertRing 1.8s ease-in-out infinite; }
+  @keyframes alertRing{ 0%,100%{ box-shadow:0 0 0 0 rgba(255,130,153,0) }
+    50%{ box-shadow:0 0 0 4px rgba(255,130,153,.22) } }
+
+  /* ---------- fallback kalau filter SVG dimatikan browser ----------
+     Sebagian browser seluler hemat daya mengabaikan feDisplacementMap.
+     Kelas ini dipasang oleh JS hanya kalau filter terbukti tidak bekerja. */
+  html.no-svgfilter .cs-svg [filter]{ filter:none !important; }
+  html.no-svgfilter .cs-room-fallback{ display:block; }
+  .cs-room-fallback{ display:none; }
   .money{ font-variant-numeric:tabular-nums; letter-spacing:-.4px; }
   .hand{ font-family:'Shantell Sans','Comic Sans MS',cursive; }
 
@@ -97,6 +107,31 @@ tailwind.config = {
     background-image: repeating-linear-gradient(transparent 0 27px, #F6E7ED 27px 28px);
     background-position: 0 6px;
   }
+
+  /* ---------- struk kertas fisik ----------
+     Bayangan pakai drop-shadow supaya mengikuti tepi bergerigi,
+     bukan kotak pembungkusnya. */
+  .receipt{ position:relative; filter:drop-shadow(0 6px 12px rgba(197,150,170,.24)); }
+  .receipt-body{ background:#FFFDF7; padding:0 16px; }
+  .dotline{ border-bottom:2px dotted #EBD9DF; }
+  .stamp{ position:absolute; right:14px; bottom:14px; opacity:.20; transform:rotate(-14deg); pointer-events:none; }
+
+  /* ---------- dinding galeri polaroid ---------- */
+  .wall{ background:
+      linear-gradient(rgba(226,240,217,.70), rgba(226,240,217,.70)),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.45) 0 2px, transparent 2px 16px);
+    border:2px solid #CFE3C4; border-radius:26px; }
+  .rail{ height:6px; background:linear-gradient(#EFDCE4,#DCC0CE); border-radius:3px;
+    box-shadow:0 2px 4px rgba(180,140,160,.28); }
+  .polaroid{ background:#FFFDF8; border-radius:6px; padding:7px 7px 0;
+    box-shadow:0 4px 10px rgba(180,140,160,.22); }
+  .polaroid .shot{ border-radius:3px; display:grid; place-items:center; }
+  .pin{ width:10px; height:10px; border-radius:999px;
+    background:radial-gradient(circle at 32% 30%, #fff, #FFC0D3 60%, #E4718A);
+    box-shadow:0 1px 3px rgba(170,120,140,.4); }
+
+  /* teks maskot dibatasi dua baris */
+  .clamp2{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 
   /* ---------- Washi tape (motif dari variabel --tape) ---------- */
   .tape{ position:relative; }
@@ -146,12 +181,12 @@ tailwind.config = {
   }
   .clay-boing{ animation: boing .5s cubic-bezier(.34,1.56,.64,1); }
   @keyframes boing{ 0%{transform:translateY(7px) scale(.94)} 45%{transform:translateY(-5px) scale(1.06)} 100%{transform:translateY(0) scale(1)} }
-  .clay-mint{ --c1:#C0DCB4; --c2:#A3C79B; --c3:#7FA878; --cg:rgba(140,180,155,.36); --ci:rgba(110,150,125,.30); --ct:#46593F; }
+  .clay-mint{ --c1:#C0DCB4; --c2:#A3C79B; --c3:#5D7C58; --cg:rgba(140,180,155,.36); --ci:rgba(110,150,125,.30); --ct:#46593F; }
   .clay-gold{ --c1:#FBE7AE; --c2:#E8C665; --c3:#D9A845; --cg:rgba(220,180,100,.36); --ci:rgba(190,145,60,.30); --ct:#6B5220; }
   /* mode atur urutan */
   .sortrow{ background:#fff; border:2.5px solid #F1E4E8; border-radius:20px; box-shadow:0 3px 0 #FBF0F4; }
   .sortbtn{ width:34px; height:30px; display:grid; place-items:center; border-radius:11px;
-    background:#FFFDFB; border:2px solid #F3E7EA; font-weight:800; font-size:13px; color:#8C7F7E;
+    background:#FFFDFB; border:2px solid #F3E7EA; font-weight:800; font-size:13px; color:#7E7271;
     transition:transform .14s ease; }
   .sortbtn:active{ transform:scale(.88); }
   .sortbtn[disabled]{ opacity:.32; }
