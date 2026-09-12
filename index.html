@@ -299,7 +299,13 @@ tailwind.config = {
 <canvas id="confetti" class="fixed inset-0 z-[80] pointer-events-none hidden"></canvas>
 <input type="file" id="importFile" accept="application/json,.json" class="hidden">
 
+<!-- Versi build: isi di bawah dihasilkan oleh build.mjs dari folder src/.
+     Untuk pengembangan pakai dev.html yang memuat ./src/app.js sebagai modul. -->
 <script>
+(function(){
+"use strict";
+
+/* ======== src/i18n.js ======== */
 /* =========================================================
    PASTELS : YOUR POCKET BESTIE — Journal & Sticker Book Edition
    · Ikon: Microsoft Fluent Emoji Flat (Iconify) + efek stiker
@@ -307,8 +313,8 @@ tailwind.config = {
    · Washi tape wardrobe dengan sistem reward
    · Story card 9:16 digambar di canvas
    ========================================================= */
-(function(){
-"use strict";
+
+
 
 /* =========================================================
    1. BAHASA  ·  kamus EN dipetakan dari teks Indonesia
@@ -364,6 +370,36 @@ const EN = {
   'Amplop udah dibagi 50/30/20 ✨':'Split 50/30/20, done ✨',
   'Jatah Jajan':'Jajan Money',
   'Atur Limit Jajan Hari Ini ✏️':'Set Today’s Jajan Limit ✏️',
+  /* --- filter & pencarian --- */
+  'Cari catatan atau kategori...':'Search notes or categories...',
+  '{0} catatan cocok':'{0} matching entries',
+  'Tidak ada catatan yang cocok 🔍':'No matching entries 🔍',
+  'Coba kata lain atau lepas filter kategorinya.':'Try another word or clear the category filter.',
+  /* --- tagihan berulang --- */
+  'Tagihan Berulang 🔁':'Recurring Bills 🔁',
+  'Atur Tagihan Berulang 🔁':'Manage Recurring Bills 🔁',
+  'Dicatat otomatis tiap bulan begitu tanggalnya lewat.':'Logged automatically each month once the date passes.',
+  '+ Tambah Tagihan':'+ Add A Bill',
+  'Nama tagihan':'Bill name',
+  'Tgl':'Day',
+  'Aktif':'Active',
+  'Dijeda':'Paused',
+  'Belum ada tagihan berulang 🌱':'No recurring bills yet 🌱',
+  'Komitmen bulanan {0}':'Monthly commitment {0}',
+  '{0} tagihan otomatis dicatat 🧾':'{0} recurring bills logged 🧾',
+  'otomatis':'auto',
+  /* --- ekspor --- */
+  'Ekspor CSV':'Export CSV',
+  'Rekap {0} diekspor ke CSV 📄':'{0} recap exported as CSV 📄',
+  /* --- akun & sinkron --- */
+  'Akun & Sinkron ☁️':'Account & Sync ☁️',
+  'Mode sekarang: {0}':'Current mode: {0}',
+  'Sinkron cloud belum disetel. Isi kunci Supabase di src/data-service.js dulu.':'Cloud sync isn’t configured yet. Add your Supabase keys in src/data-service.js.',
+  'Hubungkan Akun Google':'Connect Google Account',
+  'Keluar dari Akun':'Sign Out',
+  /* --- pesan gagal yang lebih jelas --- */
+  'Gagal menyimpan. Coba backup datamu 🥲':'Couldn’t save. Try backing up your data 🥲',
+  'Backup gagal dipulihkan: {0}':'Restore failed: {0}',
   'Pilih Kucingmu 🐾':'Pick Your Cat 🐾',
   'Tiap kucing bawa kamarnya sendiri. Gonta-ganti bebas kok.':'Every cat brings its own room. Switch anytime.',
   '{0} pindah ke kamar barunya 🐾':'{0} moved into a new room 🐾',
@@ -601,6 +637,11 @@ const QUOTES_EN=[
 ];
 const QUOTES=()=>LANG==='en'?QUOTES_EN:QUOTES_ID;
 
+/* LANG hanya boleh diubah dari modul ini; binding hasil import bersifat read-only */
+function applyLang(l){ LANG = (l === 'en' || l === 'id') ? l : 'id'; return LANG; }
+function currentLang(){ return LANG; }
+
+/* ======== src/constants.js ======== */
 /* =========================================================
    2. DATA STATIS
    ========================================================= */
@@ -723,6 +764,7 @@ const EMO2ICON={'🎟️':'admission-tickets','💄':'lipstick','👜':'handbag'
   '🌷':'tulip','🍓':'strawberry','🧁':'cupcake','🐰':'rabbit','🦢':'dove','🌙':'crescent-moon',
   '🫧':'cat-face','🐻':'panda','🦋':'butterfly','🍒':'cherries','🐷':'money-bag','💰':'money-bag'};
 
+/* ======== src/utils.js ======== */
 /* =========================================================
    3. UTIL
    ========================================================= */
@@ -782,18 +824,118 @@ function iconFallback(){
     });
   },2800);
 }
-/* gaya washi tape untuk sebuah kartu */
-function tapeStyle(slot,tx,tw,tr){
-  const id = slot==='goal' ? db.washi.goal : db.washi.main;
-  const w = WMAP[id] || WASHI[0];
-  return '--tape:'+w.bg+';--tx:'+tx+';--tw:'+tw+'px;--tr:'+tr+'deg';
+
+
+/* tepi struk bergerigi · dir 1 = gigi ke atas, -1 = gigi ke bawah */
+function zig(dir){
+  const n=24, step=100/n, h=3;
+  let pts = dir>0 ? '0,'+h : '0,0';
+  for(let i=0;i<n;i++){
+    const x=i*step;
+    pts += ' '+(x+step/2).toFixed(2)+','+(dir>0?0:h);
+    pts += ' '+(x+step).toFixed(2)+','+(dir>0?h:0);
+  }
+  pts += dir>0 ? ' 100,'+h : ' 100,0';
+  return '<svg viewBox="0 0 100 '+h+'" preserveAspectRatio="none" aria-hidden="true" '+
+    'style="display:block;width:100%;height:9px"><polygon points="'+pts+'" fill="#FFFDF7"/></svg>';
+}
+/* cap jempol kucing */
+function pawStamp(size,color){
+  const c=color||'#A3C79B';
+  return '<svg viewBox="0 0 40 40" width="'+size+'" height="'+size+'" aria-hidden="true">'+
+    '<ellipse cx="20" cy="26" rx="11" ry="9" fill="'+c+'"/>'+
+    '<ellipse cx="9"  cy="15" rx="4.2" ry="5.2" fill="'+c+'"/>'+
+    '<ellipse cx="16" cy="9"  rx="4.2" ry="5.4" fill="'+c+'"/>'+
+    '<ellipse cx="24" cy="9"  rx="4.2" ry="5.4" fill="'+c+'"/>'+
+    '<ellipse cx="31" cy="15" rx="4.2" ry="5.2" fill="'+c+'"/></svg>';
+}
+
+
+let toastTimer=null;
+function toast(msg){
+  $('#toast').innerHTML='<div class="pop px-4 py-2.5 rounded-full bg-white hand font-bold text-[14px]" style="border:2.5px solid #FFD9E4;box-shadow:0 4px 0 #FFE7EE,0 10px 20px rgba(190,140,165,.2)">'+esc(msg)+'</div>';
+  $('#toast').classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>$('#toast').classList.add('hidden'),2600);
+}
+
+/* rotasi stiker di-reset tiap render supaya sudutnya stabil */
+function resetRot(){ rotN = 0; }
+
+/* =========================================================
+   SANITASI NOMINAL
+   Batas 1 triliun. Di atas itu Number masih presisi, tapi
+   Intl.NumberFormat jadi tidak enak dibaca di layar HP dan
+   hampir pasti salah ketik.
+   ========================================================= */
+const AMOUNT_MAX = 1e12;
+function sanitizeAmount(v){
+  if(typeof v === 'number'){
+    if(!isFinite(v)) return 0;
+    return Math.min(Math.max(Math.round(v), 0), AMOUNT_MAX);
+  }
+  const d = String(v == null ? '' : v).replace(/[^\d]/g, '');
+  if(!d) return 0;
+  /* potong dari kiri: 15 digit sudah lewat batas, jangan sampai jadi Infinity */
+  const n = Number(d.slice(0, 15));
+  if(!isFinite(n)) return AMOUNT_MAX;
+  return Math.min(n, AMOUNT_MAX);
+}
+/* dipakai oleh input: kembalikan string digit yang sudah dipangkas */
+function clampDigits(s){
+  const d = String(s == null ? '' : s).replace(/[^\d]/g, '').replace(/^0+(?=\d)/, '');
+  return d.slice(0, 13);
 }
 
 /* =========================================================
+   PARSING BACKUP YANG AMAN
+   JSON.parse melempar untuk teks rusak, tapi yang lebih sering
+   terjadi adalah JSON valid dengan bentuk yang salah (misal
+   file backup aplikasi lain). Keduanya harus ketahuan sebelum
+   data pengguna ditimpa.
+   ========================================================= */
+const BACKUP_MAX_BYTES = 8 * 1024 * 1024;
+
+function safeParseBackup(raw){
+  if(typeof raw !== 'string' || !raw.trim())
+    return { ok:false, code:'kosong', error:'Berkasnya kosong.' };
+  if(raw.length > BACKUP_MAX_BYTES)
+    return { ok:false, code:'kebesaran', error:'Berkasnya lebih dari 8 MB.' };
+
+  let data;
+  try{ data = JSON.parse(raw); }
+  catch(e){
+    const m = /position (\d+)/.exec(e.message || '');
+    return { ok:false, code:'rusak',
+      error:'Formatnya bukan JSON yang utuh' + (m ? ' (posisi ' + m[1] + ')' : '') + '.' };
+  }
+  if(!data || typeof data !== 'object' || Array.isArray(data))
+    return { ok:false, code:'bukan-objek', error:'Isinya bukan objek data.' };
+
+  /* tanda tangan minimal sebuah backup Pastels */
+  const punyaBulan = data.months && typeof data.months === 'object' && !Array.isArray(data.months);
+  const punyaProfil = data.profile && typeof data.profile === 'object';
+  if(!punyaBulan && !punyaProfil)
+    return { ok:false, code:'bukan-pastels', error:'Ini sepertinya bukan backup Pastels.' };
+
+  if(punyaBulan){
+    const kunci = Object.keys(data.months);
+    const salah = kunci.filter(k => !/^\d{4}-\d{2}$/.test(k));
+    if(salah.length)
+      return { ok:false, code:'kunci-bulan',
+        error:'Ada kunci bulan yang tidak wajar: ' + salah.slice(0,3).join(', ') + '.' };
+  }
+  return { ok:true, data:data };
+}
+
+/* ======== src/state.js ======== */
+/* =========================================================
    4. STATE
    ========================================================= */
-let db=null, saveTimer=null;
-let ui={ tab:'home', mk:mkNow(), hmk:mkNow(), histLvl:0, sortMode:false, quick:{cat:'makan',amount:''}, mascot:0 };
+let db=null;
+let ui={ tab:'home', mk:'', hmk:'', histLvl:0, sortMode:false,
+  q:'', fcat:'',            /* filter riwayat: keadaan tampilan, tidak disimpan */
+  quick:{cat:'makan',amount:''}, mascot:0 };
 
 function blankMonth(){ return { income:[], tx:[] }; }
 
@@ -815,7 +957,11 @@ function seed(){
     stats:{pagi:false,iritDay:false},
     washi:{ owned:['yellow','pink'], main:'yellow', goal:'pink' },
     env:{ bills:{pct:50,nom:null}, wants:{pct:30,nom:null}, save:{pct:20,nom:null} },
-    dayLimit:{}
+    dayLimit:{},
+    recurring:[
+      { id:uid(), label:'Kos bulanan',  amount:1200000, cat:'kos', day:1, active:true, lastRun:'' },
+      { id:uid(), label:'Langganan streaming', amount:65000, cat:'fun', day:5, active:true, lastRun:'' }
+    ]
   };
   const jajan=[
     ['makan',22000,'Ayam geprek'],['boba',24000,'Boba brown sugar'],['ojol',12000,'Ojek online'],
@@ -865,14 +1011,15 @@ function migrate(d){
   Object.keys(d.months).forEach(k=>{
     const M=d.months[k]||{};
     M.income=Array.isArray(M.income)?M.income:[];
+    M.income.forEach(r=>{ r.id=r.id||uid(); r.amount=sanitizeAmount(r.amount); });
     M.tx=Array.isArray(M.tx)?M.tx:[];
-    M.tx.forEach(t2=>{t2.id=t2.id||uid();t2.amount=num(t2.amount);t2.cat=t2.cat||'lain';
+    M.tx.forEach(t2=>{t2.id=t2.id||uid();t2.amount=sanitizeAmount(t2.amount);t2.cat=t2.cat||'lain';
       if(CAT_MIGRATE[t2.cat]) t2.cat=CAT_MIGRATE[t2.cat];
       t2.date=t2.date||k+'-01';});
     d.months[k]=M;
   });
   d.goals=Array.isArray(d.goals)?d.goals:[];
-  d.goals.forEach(g=>{g.id=g.id||uid();g.target=num(g.target);g.saved=num(g.saved);
+  d.goals.forEach(g=>{g.id=g.id||uid();g.target=sanitizeAmount(g.target);g.saved=sanitizeAmount(g.saved);
     g.e=fixIcon(g.e,'money-bag'); if(g.e==='pig-face') g.e='money-bag'; g.tone=num(g.tone);});
   d.streak=Object.assign({count:0,best:0,last:''},d.streak||{});
   d.badges=(d.badges&&typeof d.badges==='object')?d.badges:{};
@@ -892,16 +1039,232 @@ function migrate(d){
                  nom: (cur.nom==null||cur.nom==='')?null:num(cur.nom) };
   });
   d.dayLimit=(d.dayLimit&&typeof d.dayLimit==='object')?d.dayLimit:{};
+  /* buang kunci tanggal yang tidak wajar supaya tidak mengacaukan limit harian */
+  Object.keys(d.dayLimit).forEach(k=>{
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(k) || sanitizeAmount(d.dayLimit[k])<=0) delete d.dayLimit[k];
+    else d.dayLimit[k]=sanitizeAmount(d.dayLimit[k]);
+  });
+  /* transaksi berulang */
+  d.recurring=Array.isArray(d.recurring)?d.recurring:[];
+  d.recurring=d.recurring.filter(r=>r&&typeof r==='object').map(r=>({
+    id:r.id||uid(),
+    label:typeof r.label==='string'?r.label.slice(0,60):'',
+    amount:sanitizeAmount(r.amount),
+    cat:CATS.some(c=>c.k===r.cat)?r.cat:'kos',
+    day:clamp(num(r.day)||1,1,28),
+    active:r.active!==false,
+    lastRun:/^\d{4}-\d{2}$/.test(r.lastRun)?r.lastRun:''
+  })).slice(0,40);
   return d;
-}
-function load(){ try{ const r=localStorage.getItem(LSKEY); return r?migrate(JSON.parse(r)):seed(); }catch(e){ return seed(); } }
-function save(){
-  clearTimeout(saveTimer);
-  saveTimer=setTimeout(()=>{ try{ localStorage.setItem(LSKEY,JSON.stringify(db)); }
-    catch(e){ toast(t('Memori browsernya penuh, backup dulu yuk 🥲')); } },200);
 }
 function MO(mk){ mk=mk||ui.mk; if(!db.months[mk]) db.months[mk]=blankMonth(); return db.months[mk]; }
 
+/* satu-satunya pintu untuk menukar seluruh isi db (reset / restore) */
+function setDb(next){ db = next; return db; }
+function getDb(){ return db; }
+
+/* Gaya washi tape untuk sebuah kartu.
+   Tinggal di sini, bukan di utils, karena membaca db.washi —
+   kalau di utils, utils jadi bergantung pada state dan siklus
+   impornya memicu TDZ saat modul dievaluasi. */
+function tapeStyle(slot,tx,tw,tr){
+  const id = slot==='goal' ? db.washi.goal : db.washi.main;
+  const w = WMAP[id] || WASHI[0];
+  return '--tape:'+w.bg+';--tx:'+tx+';--tw:'+tw+'px;--tr:'+tr+'deg';
+}
+
+/* Nilai awal yang butuh util lain diisi di sini, dipanggil sekali dari boot().
+   Memanggilnya saat evaluasi modul berisiko TDZ kalau ada siklus impor. */
+function initUi(){
+  ui.mk = ui.mk || mkNow();
+  ui.hmk = ui.hmk || mkNow();
+  return ui;
+}
+
+/* ======== src/data-service.js ======== */
+/* =========================================================
+   DATA SERVICE LAYER
+   ---------------------------------------------------------
+   Satu-satunya tempat aplikasi menyentuh penyimpanan.
+   Seluruh kode lain cuma tahu tiga hal: load(), save(), DS.
+   Menukar localStorage dengan Supabase/Firebase berarti
+   menukar satu adapter, tanpa menyentuh view atau state.
+   ========================================================= */
+
+
+
+
+
+/* ---------------------------------------------------------
+   Kontrak adapter — semua adapter wajib menyediakan ini.
+   read()  -> objek db mentah, atau null kalau kosong
+   write(d)-> menyimpan, boleh async, boleh gagal
+   ---------------------------------------------------------
+   interface Adapter {
+     id: string
+     label: string
+     read(): Promise<object|null> | object|null
+     write(dbObject): Promise<void> | void
+     signIn?(): Promise<User>
+     signOut?(): Promise<void>
+     user?(): object|null
+   }
+   --------------------------------------------------------- */
+
+/* ---------- 1. Adapter lokal (dipakai sekarang) ---------- */
+const LocalAdapter = {
+  id: 'local',
+  label: 'Lokal (browser ini)',
+  labelEn: 'Local (this browser)',
+  read(){
+    let raw = null;
+    try{ raw = localStorage.getItem(LSKEY); }
+    catch(e){ console.warn('[DS] localStorage tidak bisa dibaca:', e && e.name); return null; }
+    if(!raw) return null;
+    const res = safeParseBackup(raw);
+    if(!res.ok){
+      /* data rusak: jangan dibuang, sisihkan supaya masih bisa diselamatkan manual */
+      console.warn('[DS] data tersimpan rusak:', res.error);
+      try{ localStorage.setItem(LSKEY + '-rusak-' + Date.now(), raw.slice(0, 500000)); }catch(e){}
+      return null;
+    }
+    return res.data;
+  },
+  write(d){
+    try{
+      localStorage.setItem(LSKEY, JSON.stringify(d));
+      return true;
+    }catch(e){
+      /* QuotaExceededError paling sering; beri pesan yang bisa ditindak */
+      const penuh = e && (e.name === 'QuotaExceededError' || e.code === 22);
+      toast(t(penuh ? 'Memori browsernya penuh, backup dulu yuk 🥲'
+                    : 'Gagal menyimpan. Coba backup datamu 🥲'));
+      return false;
+    }
+  },
+  user(){ return null; }
+};
+
+/* ---------- 2. Adapter cloud (kerangka, belum aktif) ----------
+   Cara mengaktifkan dengan Supabase:
+
+   1) Tambahkan di <head> index.html:
+      <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+   2) Buat tabel di Supabase (SQL editor):
+      create table pastels_state (
+        user_id uuid primary key references auth.users on delete cascade,
+        payload jsonb not null,
+        updated_at timestamptz default now()
+      );
+      alter table pastels_state enable row level security;
+      create policy "pemilik saja" on pastels_state
+        for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+   3) Isi SUPABASE_URL & SUPABASE_ANON_KEY di bawah, lalu
+      DS.use('cloud').
+   -------------------------------------------------------------- */
+const SUPABASE_URL = '';
+const SUPABASE_ANON_KEY = '';
+
+const CloudAdapter = {
+  id: 'cloud',
+  label: 'Akun Google (sinkron)',
+  labelEn: 'Google account (synced)',
+  _sb: null,
+  _user: null,
+  ready(){
+    return !!(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase);
+  },
+  client(){
+    if(!this._sb && this.ready())
+      this._sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return this._sb;
+  },
+  async signIn(){
+    const sb = this.client();
+    if(!sb) throw new Error('cloud-belum-disetel');
+    const { error } = await sb.auth.signInWithOAuth({ provider: 'google' });
+    if(error) throw error;
+  },
+  async signOut(){
+    const sb = this.client();
+    if(sb) await sb.auth.signOut();
+    this._user = null;
+  },
+  user(){ return this._user; },
+  async read(){
+    const sb = this.client();
+    if(!sb) return null;
+    const { data: sesi } = await sb.auth.getUser();
+    this._user = sesi && sesi.user ? sesi.user : null;
+    if(!this._user) return null;
+    const { data, error } = await sb.from('pastels_state')
+      .select('payload').eq('user_id', this._user.id).maybeSingle();
+    if(error){ console.warn('[DS] gagal baca cloud:', error.message); return null; }
+    return data ? data.payload : null;
+  },
+  async write(d){
+    const sb = this.client();
+    if(!sb || !this._user) return false;
+    const { error } = await sb.from('pastels_state')
+      .upsert({ user_id: this._user.id, payload: d, updated_at: new Date().toISOString() });
+    if(error){ console.warn('[DS] gagal tulis cloud:', error.message); return false; }
+    return true;
+  }
+};
+
+/* ---------- 3. Fasad ---------- */
+const DS = {
+  adapter: LocalAdapter,
+  /* tulis ke cloud hanya kalau adapter cloud aktif; lokal selalu ditulis
+     sebagai cache offline, jadi aplikasi tetap jalan tanpa jaringan */
+  mirrorLocal: true,
+
+  use(id){
+    this.adapter = (id === 'cloud' && CloudAdapter.ready()) ? CloudAdapter : LocalAdapter;
+    return this.adapter.id;
+  },
+  isCloud(){ return this.adapter.id === 'cloud'; },
+  cloudAvailable(){ return CloudAdapter.ready(); },
+  user(){ return this.adapter.user ? this.adapter.user() : null; },
+  label(en){ return en ? (this.adapter.labelEn || this.adapter.label) : this.adapter.label; }
+};
+
+/* ---------- 4. API yang dipakai aplikasi ---------- */
+function load(){
+  let raw = null;
+  try{ raw = DS.adapter.read(); }
+  catch(e){ console.warn('[DS] read gagal:', e); raw = null; }
+  /* adapter cloud mengembalikan Promise; boot tetap sinkron pakai cache lokal,
+     lalu hydrate() menimpanya begitu data cloud sampai */
+  if(raw && typeof raw.then === 'function') raw = LocalAdapter.read();
+  return raw ? migrate(raw) : seed();
+}
+
+let saveTimer = null;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    const snapshot = db;
+    if(DS.mirrorLocal || !DS.isCloud()) LocalAdapter.write(snapshot);
+    if(DS.isCloud()){
+      Promise.resolve(DS.adapter.write(snapshot)).catch(e => console.warn('[DS] sync:', e));
+    }
+  }, 200);
+}
+
+/* dipanggil setelah login cloud: tarik data server, lalu render ulang */
+async function hydrateFromCloud(onDone){
+  if(!DS.isCloud()) return false;
+  try{
+    const remote = await CloudAdapter.read();
+    if(remote){ onDone && onDone(migrate(remote)); return true; }
+  }catch(e){ console.warn('[DS] hydrate gagal:', e); }
+  return false;
+}
+
+/* ======== src/calc.js ======== */
 /* =========================================================
    5. HITUNGAN
    ========================================================= */
@@ -934,6 +1297,7 @@ function totalSaved(){ return db.goals.reduce((a,g)=>a+num(g.saved),0); }
 function txCountAll(){ let c=0; Object.values(db.months).forEach(M=>M.tx.forEach(x=>{ if(x.cat!=='celengan') c++; })); return c; }
 function maxGoalPct(){ const p=db.goals.map(g=>num(g.target)>0?num(g.saved)/num(g.target)*100:0); return p.length?Math.max.apply(null,p):0; }
 
+/* ======== src/rewards.js ======== */
 /* =========================================================
    6. STREAK · STIKER · REWARD WASHI
    ========================================================= */
@@ -984,6 +1348,212 @@ function flushQueue(){
   return true;
 }
 
+/* kosongkan antrean di tempat, jangan ditugaskan ulang dari luar modul */
+function clearQueue(){ queue.length = 0; }
+
+/* ======== src/recurring.js ======== */
+/* =========================================================
+   TRANSAKSI BERULANG
+   ---------------------------------------------------------
+   Satu entri = satu tagihan bulanan. Tiap bulan, saat aplikasi
+   dibuka dan tanggalnya sudah lewat, entri dicatat sekali ke
+   bulan itu. Penanda `lastRun` mencegah dobel, dan `rec`
+   menandai transaksi supaya bisa dibedakan dari catatan manual.
+   ========================================================= */
+
+
+
+function recList(){
+  if(!Array.isArray(db.recurring)) db.recurring = [];
+  return db.recurring;
+}
+
+function recAdd(){
+  const r = { id: uid(), label: '', amount: 0, cat: 'kos', day: 1, active: true, lastRun: '' };
+  recList().push(r);
+  return r;
+}
+function recDel(id){ db.recurring = recList().filter(r => r.id !== id); }
+function recFind(id){ return recList().filter(r => r.id === id)[0]; }
+
+function recNormalize(r){
+  r.amount = sanitizeAmount(r.amount);
+  r.day = clamp(num(r.day) || 1, 1, 28);      /* 28 supaya aman di Februari */
+  if(!CATS.some(c => c.k === r.cat)) r.cat = 'kos';
+  r.active = !!r.active;
+  return r;
+}
+
+/* apakah entri sudah waktunya dicatat untuk bulan berjalan */
+function recDue(r, mk, hariIni){
+  if(!r.active) return false;
+  if(sanitizeAmount(r.amount) <= 0) return false;
+  if(r.lastRun === mk) return false;
+  return clamp(num(r.day) || 1, 1, 28) <= hariIni;
+}
+
+/* dijalankan sekali saat boot dan setiap ganti bulan.
+   Mengembalikan jumlah entri yang baru dicatat. */
+function applyRecurring(){
+  const mk = mkNow(), hariIni = new Date().getDate();
+  const M = MO(mk);
+  let n = 0, total = 0;
+  recList().forEach(r => {
+    recNormalize(r);
+    if(!recDue(r, mk, hariIni)) return;
+    /* jaring pengaman: kalau transaksi dengan penanda sama sudah ada, lewati */
+    if(M.tx.some(x => x.rec === r.id && String(x.date).slice(0, 7) === mk)){ r.lastRun = mk; return; }
+    M.tx.push({
+      id: uid(), date: mk + '-' + pad2(clamp(num(r.day) || 1, 1, 28)),
+      cat: r.cat, amount: sanitizeAmount(r.amount),
+      note: r.label || '', h: 9, rec: r.id
+    });
+    r.lastRun = mk; n++; total += sanitizeAmount(r.amount);
+  });
+  return { count: n, total: total };
+}
+
+/* total komitmen bulanan, dipakai di ringkasan amplop */
+function recMonthlyTotal(){
+  return recList().reduce((a, r) => a + (r.active ? sanitizeAmount(r.amount) : 0), 0);
+}
+
+/* ======== src/csv.js ======== */
+/* =========================================================
+   EKSPOR CSV
+   ---------------------------------------------------------
+   Pemisah memakai titik koma karena Excel versi Indonesia
+   membaca koma sebagai pemisah desimal. BOM UTF-8 dipasang
+   supaya emoji dan huruf beraksen tidak jadi mojibake.
+   ========================================================= */
+
+
+
+
+
+const SEP = ';';
+
+function cell(v){
+  const s = String(v == null ? '' : v);
+  return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function row(arr){ return arr.map(cell).join(SEP); }
+
+function catName(k){
+  if(k === 'celengan') return LANG === 'en' ? CELENGAN.en : CELENGAN.n;
+  const c = CATS.filter(x => x.k === k)[0];
+  return c ? (LANG === 'en' ? c.en : c.n) : k;
+}
+
+function monthCsv(mk){
+  const M = MO(mk), s = sums(mk);
+  const L = LANG === 'en'
+    ? { h:'Pastels — monthly recap', per:'Period', in:'Money in', out:'Spent', sav:'Saved', left:'Left over',
+        env:'Envelope', alloc:'Allocated', used:'Used', d:'Date', c:'Category', n:'Note', a:'Amount', k:'Type',
+        income:'income', expense:'expense', saving:'saving', auto:'auto', man:'manual', src:'Source', tx:'Transactions' }
+    : { h:'Pastels — rekap bulanan', per:'Periode', in:'Cuan masuk', out:'Kejajanin', sav:'Ketabung', left:'Sisa dompet',
+        env:'Amplop', alloc:'Alokasi', used:'Kepake', d:'Tanggal', c:'Kategori', n:'Catatan', a:'Nominal', k:'Jenis',
+        income:'pemasukan', expense:'pengeluaran', saving:'celengan', auto:'otomatis', man:'manual', src:'Sumber', tx:'Transaksi' };
+
+  const out = [];
+  out.push(row([L.h]));
+  out.push(row([L.per, mkLabel(mk)]));
+  out.push('');
+  out.push(row([L.in, s.masuk]));
+  out.push(row([L.out, s.jajan]));
+  out.push(row([L.sav, s.nabung]));
+  out.push(row([L.left, s.sisa]));
+  out.push('');
+  out.push(row([L.env, L.alloc, L.used]));
+  ['bills', 'wants', 'save'].forEach(k => {
+    out.push(row([k, envNom(k, s.masuk), envSpent(mk, k)]));
+  });
+  out.push('');
+
+  /* pemasukan */
+  out.push(row([L.src, L.d, L.a]));
+  M.income.forEach(r => out.push(row([r.label || '', r.date || '', num(r.amount)])));
+  out.push('');
+
+  /* transaksi */
+  out.push(row([L.tx]));
+  out.push(row([L.d, L.c, L.n, L.a, L.k, L.src]));
+  M.tx.slice().sort((a, b) => String(a.date).localeCompare(String(b.date))).forEach(x => {
+    out.push(row([
+      x.date, catName(x.cat), x.note || '', num(x.amount),
+      x.cat === 'celengan' ? L.saving : L.expense,
+      x.rec ? L.auto : L.man
+    ]));
+  });
+  return '\uFEFF' + out.join('\r\n') + '\r\n';
+}
+
+function csvFilename(mk){ return 'pastels-' + mk + '.csv'; }
+
+/* ======== src/filter.js ======== */
+/* =========================================================
+   FILTER & PENCARIAN RIWAYAT
+   ---------------------------------------------------------
+   Keadaan filter disimpan di ui supaya ikut bertahan saat
+   pindah bulan, tapi tidak ikut tersimpan ke localStorage —
+   filter adalah keadaan tampilan, bukan data.
+   ========================================================= */
+
+
+
+
+function filterActive(){
+  return !!((ui.q && ui.q.trim()) || ui.fcat);
+}
+function filterReset(){ ui.q = ''; ui.fcat = ''; }
+
+function norm(s){ return String(s == null ? '' : s).toLowerCase(); }
+
+/* satu transaksi lolos filter? */
+function txMatch(x){
+  if(ui.fcat && x.cat !== ui.fcat) return false;
+  const q = norm(ui.q).trim();
+  if(!q) return true;
+  const c = x.cat === 'celengan' ? CELENGAN : (CATS.filter(y => y.k === x.cat)[0] || {});
+  const nama = LANG === 'en' ? (c.en || c.n || '') : (c.n || '');
+  /* cocokkan catatan, nama kategori, dan nominal mentah */
+  return norm(x.note).indexOf(q) >= 0 ||
+         norm(nama).indexOf(q) >= 0 ||
+         String(x.amount).indexOf(q.replace(/[^\d]/g, '')) >= 0 && /\d/.test(q);
+}
+
+/* bilah pencarian + deretan chip kategori */
+function filterBar(hitung){
+  const cats = CATS.concat([CELENGAN]);
+  const chips = cats.map(c => {
+    const on = ui.fcat === c.k;
+    return '<button data-act="fcat" data-k="' + c.k + '" aria-pressed="' + on + '" ' +
+      'class="shrink-0 flex items-center gap-1 pl-1 pr-2.5 py-1 rounded-full hand text-[11px] font-bold whitespace-nowrap" ' +
+      'style="background:' + (on ? c.c : '#FFFDFB') + ';border:2px solid ' + (on ? c.s : '#F3E7EA') + ';' +
+      'color:' + (on ? '#5A4E4D' : '#8C7F7E') + '">' +
+      stk(c.i, { size: 22, ic: 14, tone: c.c, rot: 0, round: true, fb: c.f }) +
+      esc(LANG === 'en' ? (c.en || c.n) : c.n) + '</button>';
+  }).join('');
+
+  return '<div class="mb-2.5">' +
+    '<div class="amtbox flex items-center gap-2 px-2.5 py-1.5 rounded-2xl mb-2" ' +
+      'style="background:#FFFDFB;border:2px solid #F3E7EA">' +
+      '<span class="text-[13px] shrink-0 opacity-60">🔍</span>' +
+      '<input id="qbox" type="text" data-field="q" value="' + esc(ui.q || '') + '" ' +
+        'placeholder="' + esc(t('Cari catatan atau kategori...')) + '" ' +
+        'class="bigamt bg-transparent border-0 p-0 text-[13.5px]">' +
+      (filterActive()
+        ? '<button data-act="q-clear" aria-label="Hapus filter" class="shrink-0 w-6 h-6 grid place-items-center rounded-full hand font-bold text-[13px]" style="background:#FFEAF0;color:#C9758A">×</button>'
+        : '') +
+    '</div>' +
+    '<div class="flex gap-1.5 overflow-x-auto hide-scroll pb-1">' + chips + '</div>' +
+    (filterActive()
+      ? '<p class="hand text-[11px] text-soft mt-1.5">' + esc(tf('{0} catatan cocok', hitung)) + '</p>'
+      : '') +
+  '</div>';
+}
+
+/* ======== src/fx.js ======== */
 /* =========================================================
    7. CONFETTI
    ========================================================= */
@@ -1039,16 +1609,10 @@ function confetti(strong){
   })(t0);
 }
 
+/* ======== src/sheet.js ======== */
 /* =========================================================
    8. TOAST & SHEET
    ========================================================= */
-let toastTimer=null;
-function toast(msg){
-  $('#toast').innerHTML='<div class="pop px-4 py-2.5 rounded-full bg-white hand font-bold text-[14px]" style="border:2.5px solid #FFD9E4;box-shadow:0 4px 0 #FFE7EE,0 10px 20px rgba(190,140,165,.2)">'+esc(msg)+'</div>';
-  $('#toast').classList.remove('hidden');
-  clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>$('#toast').classList.add('hidden'),2600);
-}
 function sheet(inner,opt){
   $('#modal').innerHTML=
     '<div data-act="close" class="absolute inset-0" style="background:rgba(91,75,87,.30);backdrop-filter:blur(3px)"></div>'+
@@ -1102,76 +1666,7 @@ function celebrateWashi(w){
     '</div>');
 }
 
-/* =========================================================
-   9. HEADER
-   ========================================================= */
-function sapaan(){
-  const j=new Date().getHours();
-  const slot = j<11?0:(j<15?1:(j<18?2:3));
-  /* panggilan bawaan per waktu: [ID, EN] */
-  const FB=[['Sweety','Cutie'],['Sweety','Bestie'],['Sweety','Cutie'],['Bestie','Sweety']];
-  const panggil = db.profile.name ? db.profile.name : FB[slot][LANG==='en'?1:0];
-  if(slot===0) return tf('Pagi {0}! ✨ Siap atur jajan hari ini?',panggil);
-  if(slot===1) return tf('Siang {0}! 🌸 Mau catat jajan apa hari ini?',panggil);
-  if(slot===2) return tf('Sore {0}! 🌿 Gimana jajan hari ini?',panggil);
-  return tf('Met malem {0}! 🌙 Spill jajan seharian yuk~',panggil);
-}
-function mascotLine(){
-  const s=sums(mkNow()), jatah=allowance(), spent=spentOn(today());
-  const near=db.goals.filter(g=>num(g.target)>0&&num(g.saved)/num(g.target)>=.8&&num(g.saved)<num(g.target))[0];
-  const full=db.goals.filter(g=>num(g.target)>0&&num(g.saved)>=num(g.target))[0];
-  const lines=[sapaan()];
-  if(jatah>0&&spent>jatah*.75) lines.push(t('Opps, jatah jajan tipis nih... Rem dikit dulu ya! 🚨'));
-  else if(spent>0) lines.push(t('Aman banget! Masih bisa jajan enak hari ini 🍦'));
-  if(full) lines.push(tf('Celengan {0} udah full! Checkout yuk 🎉',full.name));
-  if(near) lines.push(t('Celengan kamu dikit lagi penuh, semangat! 💖'));
-  if(spent===0) lines.push(t('Hari ini mau jajan apa? 👀'));
-  if(num(db.streak.count)>=3) lines.push(tf('Streak {0} hari, rajin banget sih 🔥',db.streak.count));
-  if(s.sisa<0) lines.push(t('Dompetnya minus nih, yuk cek lagi 🥲'));
-  lines.push(t('Aku temenin nyatet, ya 💕'));
-  lines.push(t('Jangan lupa minum air putih! 🫧'));
-  return lines[ui.mascot % lines.length];
-}
-function renderHeader(){
-  const ava=AVATARS.find(a=>a[0]===db.profile.ava)||AVATARS[0];
-  const st=db.streak;
-  const sub={home:'Yuk cek dompet kamu',save:'Wishlist kamu nungguin',badge:'Koleksi stiker kamu',recap:'Rekap bulan ini'}[ui.tab];
-  $('#hdr').innerHTML=
-    '<div class="flex items-center gap-2.5">'+
-      '<button data-act="mascot" aria-label="Ganti sapaan" class="stk-press shrink-0 hop">'+
-        stk(ava[0],{size:52,ic:32,tone:'#FFD2E0',rot:-4,round:true,fb:ava[1]})+'</button>'+
-      '<div class="bubble flex-1 min-w-0">'+
-        '<p class="hand font-semibold text-[12.5px] leading-snug clamp2">'+esc(mascotLine())+'</p>'+
-        '<p class="text-[10px] text-soft leading-tight truncate">'+esc(t(sub))+'</p>'+
-      '</div>'+
-      '<div class="flex flex-col gap-1.5 shrink-0">'+
-        '<div class="langpill">'+
-          '<button data-act="lang" data-l="id" aria-pressed="'+(LANG==='id')+'"><span>🇮🇩</span>ID</button>'+
-          '<button data-act="lang" data-l="en" aria-pressed="'+(LANG==='en')+'"><span>🇬🇧</span>EN</button>'+
-        '</div>'+
-        '<button data-act="settings" aria-label="Settings" class="stk-press self-end">'+
-          stk('gear',{size:34,ic:19,tone:'#E8D8E8',rot:3,fb:'⚙️'})+'</button>'+
-      '</div>'+
-    '</div>'+
-    '<div class="flex items-center gap-2 mt-2.5">'+
-      '<div class="flex items-center gap-1.5 pl-1.5 pr-3 py-1 rounded-full bg-white" style="border:2.5px solid #FBE49B;box-shadow:0 3px 0 #FBE49B;transform:rotate(-1.5deg)">'+
-        stk('fire',{size:26,ic:17,tone:'#FBE49B',rot:0,round:true,fb:'🔥'})+
-        '<span class="hand font-bold text-[13px] leading-none">'+esc(tf('{0} Hari Rajin Catat Jajan!',num(st.count)))+'</span>'+
-      '</div>'+
-      '<div class="flex items-center gap-1.5 pl-1.5 pr-3 py-1 rounded-full bg-white" style="border:2.5px solid #D3E7C6;box-shadow:0 3px 0 #D3E7C6;transform:rotate(1.5deg)">'+
-        stk('glowing-star',{size:26,ic:17,tone:'#D3E7C6',rot:0,round:true,fb:'🌟'})+
-        '<span class="hand font-bold text-[13px] leading-none">'+esc(tf('{0} Stiker Kekumpul',Object.keys(db.badges).length))+'</span>'+
-      '</div>'+
-    '</div>';
-}
-
-function cardHead(title,icon,tone,fb,right){
-  return '<div class="flex items-center gap-2.5 mb-3">'+
-    stk(icon,{size:40,ic:23,tone:tone,fb:fb})+
-    '<h2 class="hand font-bold text-[16.5px] flex-1 leading-tight">'+esc(title)+'</h2>'+
-    (right||'')+'</div>';
-}
-
+/* ======== src/mascot.js ======== */
 /* =========================================================
    9a. MASKOT "CAT ON CHAIR" — roster ras kucing + kamarnya
    ---------------------------------------------------------
@@ -2064,6 +2559,7 @@ function catAvatar(catId){
     '<g transform="translate(0,-2)">' + catHead(C, U, 'melek') + '</g></svg>';
 }
 
+/* ======== src/history.js ======== */
 /* =========================================================
    9b. RIWAYAT BERTINGKAT & CERITA BULANAN
    ========================================================= */
@@ -2072,13 +2568,18 @@ const HIST_WIN=[3,7,9999];
 function histAnchor(hmk){ return hmk===mkNow() ? today() : hmk+'-'+pad2(daysIn(hmk)); }
 function histDates(hmk,lvl){
   const M=MO(hmk), by={};
-  M.tx.forEach(x=>{(by[x.date]=by[x.date]||[]).push(x);});
+  /* filter dipasang di sumber, jadi seluruh turunannya ikut konsisten:
+     daftar hari, total struk, dan tombol "lihat lebih" */
+  M.tx.forEach(x=>{ if(txMatch(x)) (by[x.date]=by[x.date]||[]).push(x); });
   const all=Object.keys(by).sort().reverse();
+  const hits=all.reduce((a,ds)=>a+by[ds].length,0);
+  /* saat filter aktif, jendela 3/7 hari diabaikan — kalau tidak,
+     hasil pencarian bisa "hilang" hanya karena tanggalnya lama */
+  if(filterActive()) return { by, all, shown:all, hits, filtered:true };
   const win=HIST_WIN[clamp(lvl,0,2)], anchor=histAnchor(hmk);
   let shown=all.filter(ds=>dayDiff(ds,anchor)<win);
-  /* kalau beberapa hari terakhir kosong, tetap tampilkan catatan terbaru */
   if(!shown.length && all.length) shown=all.slice(0, win===9999?all.length:Math.min(win,all.length));
-  return { by, all, shown };
+  return { by, all, shown, hits, filtered:false };
 }
 function prevMonthWithData(hmk){
   let y=num(hmk.slice(0,4)), m=num(hmk.slice(5,7));
@@ -2111,6 +2612,78 @@ function storyList(items){
     '<span class="text-[13px] leading-relaxed pt-1">'+it.h+'</span></li>').join('')+'</ul>';
 }
 
+/* ======== src/views/header.js ======== */
+/* =========================================================
+   9. HEADER
+   ========================================================= */
+function sapaan(){
+  const j=new Date().getHours();
+  const slot = j<11?0:(j<15?1:(j<18?2:3));
+  /* panggilan bawaan per waktu: [ID, EN] */
+  const FB=[['Sweety','Cutie'],['Sweety','Bestie'],['Sweety','Cutie'],['Bestie','Sweety']];
+  const panggil = db.profile.name ? db.profile.name : FB[slot][LANG==='en'?1:0];
+  if(slot===0) return tf('Pagi {0}! ✨ Siap atur jajan hari ini?',panggil);
+  if(slot===1) return tf('Siang {0}! 🌸 Mau catat jajan apa hari ini?',panggil);
+  if(slot===2) return tf('Sore {0}! 🌿 Gimana jajan hari ini?',panggil);
+  return tf('Met malem {0}! 🌙 Spill jajan seharian yuk~',panggil);
+}
+function mascotLine(){
+  const s=sums(mkNow()), jatah=allowance(), spent=spentOn(today());
+  const near=db.goals.filter(g=>num(g.target)>0&&num(g.saved)/num(g.target)>=.8&&num(g.saved)<num(g.target))[0];
+  const full=db.goals.filter(g=>num(g.target)>0&&num(g.saved)>=num(g.target))[0];
+  const lines=[sapaan()];
+  if(jatah>0&&spent>jatah*.75) lines.push(t('Opps, jatah jajan tipis nih... Rem dikit dulu ya! 🚨'));
+  else if(spent>0) lines.push(t('Aman banget! Masih bisa jajan enak hari ini 🍦'));
+  if(full) lines.push(tf('Celengan {0} udah full! Checkout yuk 🎉',full.name));
+  if(near) lines.push(t('Celengan kamu dikit lagi penuh, semangat! 💖'));
+  if(spent===0) lines.push(t('Hari ini mau jajan apa? 👀'));
+  if(num(db.streak.count)>=3) lines.push(tf('Streak {0} hari, rajin banget sih 🔥',db.streak.count));
+  if(s.sisa<0) lines.push(t('Dompetnya minus nih, yuk cek lagi 🥲'));
+  lines.push(t('Aku temenin nyatet, ya 💕'));
+  lines.push(t('Jangan lupa minum air putih! 🫧'));
+  return lines[ui.mascot % lines.length];
+}
+function renderHeader(){
+  const ava=AVATARS.find(a=>a[0]===db.profile.ava)||AVATARS[0];
+  const st=db.streak;
+  const sub={home:'Yuk cek dompet kamu',save:'Wishlist kamu nungguin',badge:'Koleksi stiker kamu',recap:'Rekap bulan ini'}[ui.tab];
+  $('#hdr').innerHTML=
+    '<div class="flex items-center gap-2.5">'+
+      '<button data-act="mascot" aria-label="Ganti sapaan" class="stk-press shrink-0 hop">'+
+        stk(ava[0],{size:52,ic:32,tone:'#FFD2E0',rot:-4,round:true,fb:ava[1]})+'</button>'+
+      '<div class="bubble flex-1 min-w-0">'+
+        '<p class="hand font-semibold text-[12.5px] leading-snug clamp2">'+esc(mascotLine())+'</p>'+
+        '<p class="text-[10px] text-soft leading-tight truncate">'+esc(t(sub))+'</p>'+
+      '</div>'+
+      '<div class="flex flex-col gap-1.5 shrink-0">'+
+        '<div class="langpill">'+
+          '<button data-act="lang" data-l="id" aria-pressed="'+(LANG==='id')+'"><span>🇮🇩</span>ID</button>'+
+          '<button data-act="lang" data-l="en" aria-pressed="'+(LANG==='en')+'"><span>🇬🇧</span>EN</button>'+
+        '</div>'+
+        '<button data-act="settings" aria-label="Settings" class="stk-press self-end">'+
+          stk('gear',{size:34,ic:19,tone:'#E8D8E8',rot:3,fb:'⚙️'})+'</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="flex items-center gap-2 mt-2.5">'+
+      '<div class="flex items-center gap-1.5 pl-1.5 pr-3 py-1 rounded-full bg-white" style="border:2.5px solid #FBE49B;box-shadow:0 3px 0 #FBE49B;transform:rotate(-1.5deg)">'+
+        stk('fire',{size:26,ic:17,tone:'#FBE49B',rot:0,round:true,fb:'🔥'})+
+        '<span class="hand font-bold text-[13px] leading-none">'+esc(tf('{0} Hari Rajin Catat Jajan!',num(st.count)))+'</span>'+
+      '</div>'+
+      '<div class="flex items-center gap-1.5 pl-1.5 pr-3 py-1 rounded-full bg-white" style="border:2.5px solid #D3E7C6;box-shadow:0 3px 0 #D3E7C6;transform:rotate(1.5deg)">'+
+        stk('glowing-star',{size:26,ic:17,tone:'#D3E7C6',rot:0,round:true,fb:'🌟'})+
+        '<span class="hand font-bold text-[13px] leading-none">'+esc(tf('{0} Stiker Kekumpul',Object.keys(db.badges).length))+'</span>'+
+      '</div>'+
+    '</div>';
+}
+
+function cardHead(title,icon,tone,fb,right){
+  return '<div class="flex items-center gap-2.5 mb-3">'+
+    stk(icon,{size:40,ic:23,tone:tone,fb:fb})+
+    '<h2 class="hand font-bold text-[16.5px] flex-1 leading-tight">'+esc(title)+'</h2>'+
+    (right||'')+'</div>';
+}
+
+/* ======== src/views/home.js ======== */
 /* =========================================================
    10. TAB RUMAH
    ========================================================= */
@@ -2192,13 +2765,18 @@ function viewHome(){
             stk(c.i,{size:38,ic:22,tone:c.c,fb:c.f})+
             '<div class="flex-1 min-w-0">'+
               '<p class="hand text-[14px] font-semibold truncate leading-tight">'+esc(x.note||cName(c))+'</p>'+
-              '<p class="text-[10.5px] text-soft">'+esc(cName(c))+'</p></div>'+
+              '<p class="text-[10.5px] text-soft">'+esc(cName(c))+(x.rec?' · '+t('otomatis'):'')+'</p></div>'+
             '<span class="font-extrabold text-[14px] money shrink-0" style="color:'+(x.cat==='celengan'?'#7FA878':'#5A4E4D')+'">'+(x.cat==='celengan'?'+':'−')+rpS(x.amount)+'</span>'+
             '<button data-act="del-tx" data-id="'+x.id+'" aria-label="Hapus" class="w-6 h-6 grid place-items-center text-[#CBBCC0] font-bold text-[15px] shrink-0">×</button>'+
           '</div>';
         }).join('')+
       '</div>';
     });
+  } else if(filterActive()){
+    hist='<div class="text-center py-7">'+
+      '<div class="inline-block mb-3">'+stk('memo',{size:64,ic:38,tone:'#EFDFB4',rot:3,fb:'🔍'})+'</div>'+
+      '<p class="hand text-[14.5px] font-bold mb-1">'+t('Tidak ada catatan yang cocok 🔍')+'</p>'+
+      '<p class="text-[12.5px] text-soft px-6">'+t('Coba kata lain atau lepas filter kategorinya.')+'</p></div>';
   } else {
     hist='<div class="text-center py-8">'+
       '<div class="inline-block mb-3">'+stk('basket',{size:74,ic:44,tone:'#EFDCD1',rot:-4,fb:'🧺'})+'</div>'+
@@ -2247,8 +2825,9 @@ function viewHome(){
         '</div>'+
         (isCur?'':'<button data-act="hist-now" class="hand text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap shrink-0" style="background:#FFF6E2;border:2px solid #F7E6B6;color:#8A7565">'+t('Balik ke bulan ini')+'</button>')+
       '</div>'+
-      '<p class="text-center text-[10.5px] text-soft mt-1 mb-2">'+esc(mkLabel(hmk)+' · '+capt+' · '+tf('{0} hari tercatat',H.shown.length))+'</p>'+
+      '<p class="text-center text-[10.5px] text-soft mt-1 mb-2">'+esc(mkLabel(hmk)+' · '+(H.filtered?t('Hasil pencarian'):capt)+' · '+tf('{0} hari tercatat',H.shown.length))+'</p>'+
       '<div class="dotline mb-2"></div>'+
+      filterBar(H.hits)+
       hist +
       '<div class="dotline mt-1 mb-2"></div>'+
       '<div class="flex items-end justify-between pb-1">'+
@@ -2290,30 +2869,6 @@ function viewHome(){
   return html;
 }
 
-/* tepi struk bergerigi · dir 1 = gigi ke atas, -1 = gigi ke bawah */
-function zig(dir){
-  const n=24, step=100/n, h=3;
-  let pts = dir>0 ? '0,'+h : '0,0';
-  for(let i=0;i<n;i++){
-    const x=i*step;
-    pts += ' '+(x+step/2).toFixed(2)+','+(dir>0?0:h);
-    pts += ' '+(x+step).toFixed(2)+','+(dir>0?h:0);
-  }
-  pts += dir>0 ? ' 100,'+h : ' 100,0';
-  return '<svg viewBox="0 0 100 '+h+'" preserveAspectRatio="none" aria-hidden="true" '+
-    'style="display:block;width:100%;height:9px"><polygon points="'+pts+'" fill="#FFFDF7"/></svg>';
-}
-/* cap jempol kucing */
-function pawStamp(size,color){
-  const c=color||'#A3C79B';
-  return '<svg viewBox="0 0 40 40" width="'+size+'" height="'+size+'" aria-hidden="true">'+
-    '<ellipse cx="20" cy="26" rx="11" ry="9" fill="'+c+'"/>'+
-    '<ellipse cx="9"  cy="15" rx="4.2" ry="5.2" fill="'+c+'"/>'+
-    '<ellipse cx="16" cy="9"  rx="4.2" ry="5.4" fill="'+c+'"/>'+
-    '<ellipse cx="24" cy="9"  rx="4.2" ry="5.4" fill="'+c+'"/>'+
-    '<ellipse cx="31" cy="15" rx="4.2" ry="5.2" fill="'+c+'"/></svg>';
-}
-
 function envCard(mk){
   const masuk=sums(mk).masuk, pctSum=envPctSum();
   let rows='';
@@ -2347,6 +2902,7 @@ function envCard(mk){
   '</section>';
 }
 
+/* ======== src/views/goals.js ======== */
 /* =========================================================
    11. TAB CELENGAN
    ========================================================= */
@@ -2442,6 +2998,7 @@ function viewSave(){
   return html;
 }
 
+/* ======== src/views/badges.js ======== */
 /* =========================================================
    12. TAB STIKER (+ lemari washi)
    ========================================================= */
@@ -2543,6 +3100,7 @@ function washiWardrobe(){
     '<div class="grid grid-cols-2 gap-2.5">'+cards+'</div></section>';
 }
 
+/* ======== src/views/recap.js ======== */
 /* =========================================================
    13. TAB REKAP
    ========================================================= */
@@ -2618,52 +3176,7 @@ function viewRecap(){
   return html;
 }
 
-/* =========================================================
-   14. RENDER
-   ========================================================= */
-function render(){
-  rotN=0;
-  document.documentElement.lang = LANG;
-  renderHeader();
-  $('#view').innerHTML=({home:viewHome,save:viewSave,badge:viewBadge,recap:viewRecap})[ui.tab]();
-  const items=[['home','house','🏠','Rumah'],['save','money-bag','💰','Celengan'],['badge','trophy','🏆','Stiker'],['recap','bar-chart','📊','Rekap']];
-  $('#nav').innerHTML=items.map(it=>
-    '<button data-act="tab" data-tab="'+it[0]+'" class="navbtn"'+(ui.tab===it[0]?' aria-current="page"':'')+'>'+
-      '<span class="navbox">'+ico(it[1],ui.tab===it[0]?25:22,it[2])+'</span>'+
-      '<span class="navlab">'+t(it[3])+'</span></button>').join('');
-  $('#fabIcon').innerHTML=ico('shopping-bags',22,'🛍️');
-  $('#fabText').textContent=t('Catat Jajan');
-  $('#fabWrap').style.display=(ui.tab==='home'||ui.tab==='recap')?'block':'none';
-  iconFallback();
-}
-function refresh(){
-  const s=sums(mkNow()), jatah=allowance(), spent=spentOn(today());
-  const set=(k,v)=>{const el=$('[data-live="'+k+'"]'); if(el) el.textContent=v;};
-  set('masuk',rp(s.masuk));
-  set('sisa',rpS(wantsLeft()));
-  set('left',rp(Math.max(0,jatah-spent)));
-  set('spent',tf('Kepake {0}',rpS(spent)));
-  const cst=catState(Math.max(0,jatah-spent),jatah);
-  set('kata',catQuote(cst));
-  const sc=$('[data-live="scene"]');
-  if(sc && sc.dataset.cur!==cst){ sc.dataset.cur=cst; sc.innerHTML=catScene(cst); }
-  const bar=$('[data-live="bar"]');
-  if(bar){ bar.style.width=(jatah>0?clamp(spent/jatah*100,0,100):(spent>0?100:0))+'%'; bar.style.backgroundColor=CAT_COL[cst]; }
-  db.goals.forEach(g=>{
-    const p=num(g.target)>0?clamp(num(g.saved)/num(g.target)*100,0,100):0;
-    set('gs:'+g.id,rpS(g.saved));
-    set('gp:'+g.id,Math.round(p)+'%');
-    const b=$('[data-live="gb:'+g.id+'"]'); if(b) b.style.width=p+'%';
-  });
-}
-function setLang(l){
-  if(l===LANG) return;
-  LANG=l;
-  try{ localStorage.setItem(LKEY,l); }catch(e){}
-  document.body.classList.add('langswap');
-  setTimeout(()=>{ render(); document.body.classList.remove('langswap'); },170);
-}
-
+/* ======== src/sheets.js ======== */
 /* =========================================================
    15. SHEET
    ========================================================= */
@@ -2741,6 +3254,40 @@ function catPickerSheet(){
     '</div>');
 }
 
+function recurringSheet(){
+  const list=recList();
+  const rows = list.length ? list.map(function(r){
+    const c=CATS.filter(x=>x.k===r.cat)[0]||CATS[0];
+    const opts=CATS.map(x=>'<option value="'+x.k+'"'+(x.k===r.cat?' selected':'')+'>'+esc(cName(x))+'</option>').join('');
+    return '<div class="rounded-[20px] p-3 mb-2.5" style="background:'+(r.active?'#FFFDFB':'#FAF6F2')+
+        ';border:2.5px solid '+(r.active?c.c:'#F3E7EA')+';box-shadow:0 3px 0 '+(r.active?c.c:'#FBF0F4')+'">'+
+      '<div class="flex items-center gap-2.5 mb-2">'+
+        stk(c.i,{size:36,ic:21,tone:c.c,fb:c.f})+
+        '<input type="text" data-field="rec:'+r.id+':label" value="'+esc(r.label)+'" placeholder="'+esc(t('Nama tagihan'))+'" class="flatfield hand text-[14px] font-bold flex-1 min-w-0">'+
+        '<button data-act="rec-toggle" data-id="'+r.id+'" class="shrink-0 hand text-[10.5px] font-bold px-2.5 py-1 rounded-full" '+
+          'style="background:'+(r.active?'#E2F0D9':'#F3E7EA')+';border:2px solid '+(r.active?'#A3C79B':'#EDDCE3')+';color:'+(r.active?'#5F7A5A':'#8C7F7E')+'">'+
+          t(r.active?'Aktif':'Dijeda')+'</button>'+
+        '<button data-act="rec-del" data-id="'+r.id+'" aria-label="Hapus" class="shrink-0 w-6 h-6 grid place-items-center text-[#CBBCC0] font-bold text-[15px]">×</button>'+
+      '</div>'+
+      '<div class="grid grid-cols-[1fr_84px_62px] gap-2">'+
+        '<label class="block"><span class="hand block text-[10px] text-soft mb-1">'+t('Kategori')+'</span>'+
+          '<select data-field="rec:'+r.id+':cat" class="field !py-1.5 !px-2 text-[12.5px]">'+opts+'</select></label>'+
+        '<label class="block"><span class="hand block text-[10px] text-soft mb-1">'+t('Nominal')+'</span>'+
+          '<input type="text" inputmode="numeric" data-money="1" data-field="rec:'+r.id+':amount" value="'+fmt(r.amount)+'" class="field !py-1.5 !px-2 text-right money font-extrabold text-[12.5px]"></label>'+
+        '<label class="block"><span class="hand block text-[10px] text-soft mb-1">'+t('Tgl')+'</span>'+
+          '<input type="text" inputmode="numeric" data-field="rec:'+r.id+':day" value="'+num(r.day)+'" class="field !py-1.5 !px-2 text-center font-extrabold text-[12.5px]"></label>'+
+      '</div></div>';
+  }).join('') : '<p class="hand text-[13px] text-soft text-center py-4">'+t('Belum ada tagihan berulang 🌱')+'</p>';
+
+  sheet(
+    '<h2 class="hand font-bold text-[21px] mb-1">'+t('Tagihan Berulang 🔁')+'</h2>'+
+    '<p class="text-[12.5px] text-soft mb-3">'+t('Dicatat otomatis tiap bulan begitu tanggalnya lewat.')+'</p>'+
+    '<p class="hand text-[12px] font-bold mb-3" style="color:#A88B49">'+esc(tf('Komitmen bulanan {0}',rp(recMonthlyTotal())))+'</p>'+
+    rows+
+    '<button data-act="rec-add" class="w-full py-3 rounded-2xl dashed hand font-bold text-[13.5px] text-soft mb-2 active:scale-[.98] transition">'+t('+ Tambah Tagihan')+'</button>'+
+    '<button data-act="close" class="clay w-full py-3.5 hand font-bold text-[15px] mb-1">'+t('Selesai')+'</button>');
+}
+
 function limitSheet(){
   const auto=autoAllowance(), cur=hasOverride()?num(db.dayLimit[today()]):'';
   sheet(
@@ -2792,14 +3339,29 @@ function settingsSheet(){
         stk(a[0],{size:34,ic:22,tone:'#FFE3EE',round:true,fb:a[1]})+'</button>').join('')+
     '</div>'+
     '<button data-act="kitty" class="w-full py-3 rounded-2xl hand font-bold text-[14px] mb-3" style="background:#FFF4F7;border:2.5px solid #FFD2E0;box-shadow:0 3px 0 #FFD2E0">'+t('Ganti Kucing 🐾')+'</button>'+
+    '<button data-act="rec-open" class="w-full py-3 rounded-2xl hand font-bold text-[14px] mb-3" style="background:#E9F4E2;border:2.5px solid #A3C79B;box-shadow:0 3px 0 #C0DCB4">'+t('Atur Tagihan Berulang 🔁')+'</button>'+
     '<button data-act="open-wardrobe" class="w-full py-3 rounded-2xl hand font-bold text-[14px] mb-4" style="background:#FFFAEA;border:2.5px solid #F7E7B8;box-shadow:0 3px 0 #F7E7B8">'+t('Buka Lemari Washi Tape 🎀')+'</button>'+
     '<div class="paper p-4 mb-3" style="background:#F1F8EC;border-color:#D3E7C6">'+
       cardHead(t('Backup Data 💾'),'floppy-disk','#D3E7C6','💾')+
       '<p class="text-[12px] text-[#6E9668] leading-relaxed mb-3">'+esc(tf('Semua catatan cuma nyimpen di browser ini ({0} KB). Backup dulu sebelum ganti HP ya!',(size/1024).toFixed(1)))+'</p>'+
-      '<div class="grid grid-cols-2 gap-2">'+
+      '<div class="grid grid-cols-2 gap-2 mb-2">'+
         '<button data-act="export" class="py-2.5 rounded-2xl bg-white hand font-bold text-[13px]" style="border:2px solid #D3E7C6">'+t('Unduh Backup')+'</button>'+
         '<button data-act="import" class="py-2.5 rounded-2xl bg-white hand font-bold text-[13px]" style="border:2px solid #D3E7C6">'+t('Restore Data')+'</button>'+
-      '</div></div>'+
+      '</div>'+
+      '<button data-act="export-csv" class="w-full py-2.5 rounded-2xl bg-white hand font-bold text-[13px]" style="border:2px solid #D3E7C6">'+t('Ekspor CSV')+' · '+esc(mkLabel(mkNow()))+'</button>'+
+      '</div>'+
+    /* --- akun & sinkron: kerangka Data Service Layer --- */
+    '<div class="paper p-4 mb-4" style="background:#F4F1FA;border-color:#DDD8EA">'+
+      cardHead(t('Akun & Sinkron ☁️'),'bank','#DDD8EA','🏦')+
+      '<p class="text-[12px] leading-relaxed mb-3" style="color:#6E6884">'+
+        esc(tf('Mode sekarang: {0}',DS.label(LANG==='en')))+
+        (DS.cloudAvailable()?'':'<br>'+esc(t('Sinkron cloud belum disetel. Isi kunci Supabase di src/data-service.js dulu.')))+'</p>'+
+      (DS.cloudAvailable()
+        ? (DS.isCloud()
+            ? '<button data-act="cloud-out" class="w-full py-2.5 rounded-2xl bg-white hand font-bold text-[13px]" style="border:2px solid #DDD8EA">'+t('Keluar dari Akun')+'</button>'
+            : '<button data-act="cloud-in" class="w-full py-2.5 rounded-2xl bg-white hand font-bold text-[13px]" style="border:2px solid #DDD8EA">'+t('Hubungkan Akun Google')+'</button>')
+        : '<button disabled class="w-full py-2.5 rounded-2xl hand font-bold text-[13px] opacity-50" style="background:#EFEAF6;border:2px solid #DDD8EA">'+t('Hubungkan Akun Google')+'</button>')+
+    '</div>'+
     '<div class="paper p-4 mb-4" style="background:#FFFAEA;border-color:#F7E7B8">'+
       cardHead(t('Pasang di Home Screen 📱'),'mobile-phone','#F7E7B8','📱')+
       '<p class="text-[12px] text-[#8A7565] leading-relaxed">'+t('Buka di Safari → ketuk ikon Share → pilih “Add to Home Screen”. Jadi kayak app beneran!')+'</p></div>'+
@@ -2820,6 +3382,7 @@ function badgeSheet(id){
   '</div>');
 }
 
+/* ======== src/story.js ======== */
 /* =========================================================
    16. STORY CARD 9:16
    ========================================================= */
@@ -2989,6 +3552,67 @@ function dataURLtoBlob(u){
   return new Blob([arr],{type:'image/png'});
 }
 
+/* ======== src/render.js ======== */
+/* =========================================================
+   14. RENDER
+   ========================================================= */
+function render(){
+  resetRot();
+  document.documentElement.lang = LANG;
+  renderHeader();
+  $('#view').innerHTML=({home:viewHome,save:viewSave,badge:viewBadge,recap:viewRecap})[ui.tab]();
+  const items=[['home','house','🏠','Rumah'],['save','money-bag','💰','Celengan'],['badge','trophy','🏆','Stiker'],['recap','bar-chart','📊','Rekap']];
+  $('#nav').innerHTML=items.map(it=>
+    '<button data-act="tab" data-tab="'+it[0]+'" class="navbtn"'+(ui.tab===it[0]?' aria-current="page"':'')+'>'+
+      '<span class="navbox">'+ico(it[1],ui.tab===it[0]?25:22,it[2])+'</span>'+
+      '<span class="navlab">'+t(it[3])+'</span></button>').join('');
+  $('#fabIcon').innerHTML=ico('shopping-bags',22,'🛍️');
+  $('#fabText').textContent=t('Catat Jajan');
+  $('#fabWrap').style.display=(ui.tab==='home'||ui.tab==='recap')?'block':'none';
+  iconFallback();
+}
+function refresh(){
+  const s=sums(mkNow()), jatah=allowance(), spent=spentOn(today());
+  const set=(k,v)=>{const el=$('[data-live="'+k+'"]'); if(el) el.textContent=v;};
+  set('masuk',rp(s.masuk));
+  set('sisa',rpS(wantsLeft()));
+  set('left',rp(Math.max(0,jatah-spent)));
+  set('spent',tf('Kepake {0}',rpS(spent)));
+  const cst=catState(Math.max(0,jatah-spent),jatah);
+  set('kata',catQuote(cst));
+  const sc=$('[data-live="scene"]');
+  if(sc && sc.dataset.cur!==cst){ sc.dataset.cur=cst; sc.innerHTML=catScene(cst); }
+  const bar=$('[data-live="bar"]');
+  if(bar){ bar.style.width=(jatah>0?clamp(spent/jatah*100,0,100):(spent>0?100:0))+'%'; bar.style.backgroundColor=CAT_COL[cst]; }
+  db.goals.forEach(g=>{
+    const p=num(g.target)>0?clamp(num(g.saved)/num(g.target)*100,0,100):0;
+    set('gs:'+g.id,rpS(g.saved));
+    set('gp:'+g.id,Math.round(p)+'%');
+    const b=$('[data-live="gb:'+g.id+'"]'); if(b) b.style.width=p+'%';
+  });
+}
+function setLang(l){
+  if(l===LANG) return;
+  applyLang(l);
+  try{ localStorage.setItem(LKEY,l); }catch(e){}
+  document.body.classList.add('langswap');
+  setTimeout(()=>{ render(); document.body.classList.remove('langswap'); },170);
+}
+
+/* ======== src/actions.js ======== */
+let qTimer=null;
+
+
+
+
+
+
+
+
+
+
+
+
 /* =========================================================
    17. AKSI
    ========================================================= */
@@ -3035,6 +3659,49 @@ document.addEventListener('click',function(ev){
     case 'set-kitty':
       db.profile.cat=d.id; save(); closeSheet(); render();
       toast(tf('{0} pindah ke kamar barunya 🐾',catKind(d.id).n)); break;
+    /* ---- filter & pencarian ---- */
+    case 'fcat': ui.fcat = (ui.fcat===d.k ? '' : d.k); render(); break;
+    case 'q-clear': filterReset(); render(); break;
+
+    /* ---- tagihan berulang ---- */
+    case 'rec-open': recurringSheet(); break;
+    case 'rec-add': recAdd(); save(); recurringSheet(); break;
+    case 'rec-del': recDel(d.id); save(); recurringSheet(); break;
+    case 'rec-toggle': {
+      const r=recFind(d.id); if(!r) break;
+      r.active=!r.active; save(); recurringSheet(); break;
+    }
+
+    /* ---- ekspor CSV ---- */
+    case 'export-csv': {
+      const mk=mkNow();
+      try{
+        const blobCsv=new Blob([monthCsv(mk)],{type:'text/csv;charset=utf-8'});
+        const u=URL.createObjectURL(blobCsv);
+        const a2=document.createElement('a'); a2.href=u; a2.download=csvFilename(mk);
+        document.body.appendChild(a2); a2.click(); a2.remove();
+        setTimeout(()=>URL.revokeObjectURL(u),4000);
+        toast(tf('Rekap {0} diekspor ke CSV 📄',mkLabel(mk)));
+      }catch(e){ toast(t('Yah, gagal keunduh 🥲')); }
+      break;
+    }
+
+    /* ---- akun cloud ---- */
+    case 'cloud-in': {
+      Promise.resolve(CloudAdapter.signIn()).then(()=>{
+        DS.use('cloud');
+        return hydrateFromCloud(next=>{ setDb(next); render(); });
+      }).then(()=>{ closeSheet(); render(); toast(t('Yeay, data kamu balik lagi 💕')); })
+        .catch(e=>toast(t('Sinkron cloud belum disetel. Isi kunci Supabase di src/data-service.js dulu.')));
+      break;
+    }
+    case 'cloud-out': {
+      Promise.resolve(CloudAdapter.signOut()).then(()=>{
+        DS.use('local'); closeSheet(); settingsSheet();
+      }).catch(()=>{});
+      break;
+    }
+
     case 'edit-limit': limitSheet(); break;
     case 'limit-save': {
       const v=num(digits($('#la')?$('#la').value:''));
@@ -3199,7 +3866,7 @@ document.addEventListener('click',function(ev){
         '</div></div>');
       break;
     case 'reset-ok':
-      db=seed(); ui.mk=mkNow(); queue=[]; collectRewards(); queue=[];
+      setDb(seed()); ui.mk=mkNow(); clearQueue(); collectRewards(); clearQueue();
       try{ localStorage.setItem(LSKEY,JSON.stringify(db)); }catch(e){}
       closeSheet(); render(); toast(t('Oke, mulai dari nol lagi 🌱')); break;
   }
@@ -3210,12 +3877,33 @@ document.addEventListener('input',function(ev){
   const el=ev.target; if(!el.dataset) return;
   if(el.dataset.money==='1'){
     const atEnd=el.selectionStart===el.value.length;
-    const f=digits(el.value)?fmt(digits(el.value)):'';
+    const f=clampDigits(el.value)?fmt(clampDigits(el.value)):'';
     if(f!==el.value){ el.value=f; if(atEnd){ try{ el.setSelectionRange(f.length,f.length); }catch(e){} } }
   }
   const field=el.dataset.field; if(!field) return;
-  const v=el.dataset.money==='1'?num(digits(el.value)):el.value;
+  const v=el.dataset.money==='1'?sanitizeAmount(el.value):el.value;
   const p=field.split(':');
+  if(p[0]==='q'){
+    ui.q=el.value;
+    /* render ulang ditunda, lalu fokus & caret dikembalikan ke kotak cari
+       supaya mengetik tidak terputus */
+    clearTimeout(qTimer);
+    qTimer=setTimeout(()=>{
+      const pos=el.selectionStart;
+      render();
+      const box=$('#qbox');
+      if(box){ box.focus(); try{ box.setSelectionRange(pos,pos); }catch(e){} }
+    },260);
+    return;
+  }
+  if(p[0]==='rec'){
+    const r=recFind(p[1]); if(!r) return;
+    if(p[2]==='amount') r.amount=sanitizeAmount(el.value);
+    else if(p[2]==='day') r.day=clamp(num(digits(el.value))||1,1,28);
+    else if(p[2]==='label') r.label=String(v).slice(0,60);
+    else if(p[2]==='cat') r.cat=v;
+    save(); return;
+  }
   if(p[0]==='env'){
     const e=db.env[p[1]]; if(!e) return;
     if(p[2]==='pct'){ e.pct=clamp(num(digits(el.value)),0,100); e.nom=null; }
@@ -3232,14 +3920,30 @@ document.addEventListener('focusout',function(ev){
 },true);
 document.addEventListener('change',function(ev){
   const el=ev.target;
+  if(el.dataset && el.dataset.field && el.dataset.field.indexOf('rec:')===0){
+    const p=el.dataset.field.split(':'), r=recFind(p[1]);
+    if(r && p[2]==='cat'){ r.cat=el.value; save(); recurringSheet(); }
+    return;
+  }
   if(el.id==='importFile'&&el.files&&el.files[0]){
     const r=new FileReader();
     r.onload=function(){
+      const res=safeParseBackup(r.result);
+      if(!res.ok){
+        /* sebutkan alasannya, jangan cuma "gagal" — pengguna butuh tahu
+           apakah salah pilih berkas atau berkasnya memang rusak */
+        toast(tf('Backup gagal dipulihkan: {0}',res.error));
+        el.value=''; return;
+      }
+      const cadangan=db;                       /* simpan yang lama dulu */
       try{
-        db=migrate(JSON.parse(r.result)); ui.mk=mkNow();
-        localStorage.setItem(LSKEY,JSON.stringify(db));
+        setDb(migrate(res.data)); ui.mk=mkNow(); filterReset();
+        save();
         closeSheet(); render(); toast(t('Yeay, data kamu balik lagi 💕'));
-      }catch(e){ toast(t('Duh, filenya nggak kebaca. Pastiin file backup JSON ya 🥺')); }
+      }catch(e){
+        setDb(cadangan); render();             /* kembalikan kalau migrasi gagal */
+        toast(tf('Backup gagal dipulihkan: {0}',String(e&&e.message||e)));
+      }
       el.value='';
     };
     r.onerror=function(){ toast(t('Yah, filenya gagal kebaca 🥲')); el.value=''; };
@@ -3251,14 +3955,45 @@ document.addEventListener('keydown',function(ev){
   if(ev.key==='Escape'&&!$('#modal').classList.contains('hidden')) closeSheet();
 });
 
-/* ---------------- Mulai ---------------- */
-db=load();
-MO(ui.mk);
-collectRewards(); queue=[];   /* hadiah dari data awal langsung dianggap kebuka */
-save();
-render();
-window.addEventListener('load',iconFallback);
+/* ======== src/app.js ======== */
+/* =========================================================
+   ENTRY POINT
+   Urutannya penting: data dimuat -> tagihan berulang
+   dijalankan -> hadiah dihitung -> baru dirender.
+   ========================================================= */
+
+
+
+
+
+
+
+
+function boot(){
+  initUi();
+  setDb(load());
+  MO(ui.mk);
+
+  const rec = applyRecurring();
+
+  /* hadiah yang sudah terpenuhi oleh data awal dianggap sudah dibuka,
+     supaya pengguna baru tidak dihujani pop-up di detik pertama */
+  collectRewards(); clearQueue();
+
+  save();
+  render();
+
+  if(rec.count){
+    setTimeout(() => toast(tf('{0} tagihan otomatis dicatat 🧾', rec.count)), 900);
+  }
+  window.addEventListener('load', iconFallback);
+  console.info('[Pastels] siap · penyimpanan:', DS.adapter.id);
+}
+
+boot();
+
 })();
+
 </script>
 </body>
 </html>
