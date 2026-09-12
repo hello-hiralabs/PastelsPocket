@@ -1149,7 +1149,9 @@ const LocalAdapter = {
    Cara mengaktifkan dengan Supabase:
 
    1) Tambahkan di <head> index.html:
-      <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>
+      (garis miring di tag penutup sengaja di-escape: <\/script> utuh akan
+       menutup tag <script> pembungkus saat berkas ini digabung jadi satu HTML)
 
    2) Buat tabel di Supabase (SQL editor):
       create table pastels_state (
