@@ -113,7 +113,7 @@ export function buildStoryCanvas(){
   x.stroke();
 
   /* angka utama */
-  x.fillStyle='#8C7F7E'; x.font=HD(600,42); x.textAlign='center';
+  x.fillStyle='#7E7271'; x.font=HD(600,42); x.textAlign='center';
   x.fillText(t('jatah hari ini'),556,712);
   x.fillStyle='#FF8299'; x.font=PJ(800,124);
   x.fillText(rp(left),556,834);
@@ -123,7 +123,7 @@ export function buildStoryCanvas(){
     x.save(); x.shadowColor='rgba(190,130,155,.18)'; x.shadowBlur=18; x.shadowOffsetY=7;
     x.fillStyle=bg; rr(cx-142,cy,284,204,42); x.fill(); x.restore();
     x.strokeStyle=br; x.lineWidth=5; rr(cx-142,cy,284,204,42); x.stroke();
-    x.fillStyle='#8C7F7E'; x.font=HD(600,31); x.textAlign='center'; x.fillText(label,cx,cy+70);
+    x.fillStyle='#7E7271'; x.font=HD(600,31); x.textAlign='center'; x.fillText(label,cx,cy+70);
     x.fillStyle='#5A4E4D'; x.font=PJ(800,46); x.fillText(val,cx,cy+140);
   };
   box(258,904,t('total jajan kepake'),rpS(spent),'#FFF1F5','#FBD5E2');
@@ -143,7 +143,7 @@ export function buildStoryCanvas(){
 
   /* baris identitas + watermark */
   x.textAlign='center';
-  x.fillStyle='#8C7F7E'; x.font=PJ(600,33);
+  x.fillStyle='#7E7271'; x.font=PJ(600,33);
   x.fillText(nama+' · '+tf('{0} Stiker Kekumpul',Object.keys(db.badges).length),556,1580);
   /* cap jempol kucing */
   x.save(); x.translate(900,1640); x.rotate(-.22); x.globalAlpha=.22; x.fillStyle='#A3C79B';
@@ -151,7 +151,7 @@ export function buildStoryCanvas(){
   [[-26,-9,10,12],[-12,-20,10,13],[8,-20,10,13],[22,-9,10,12]].forEach(t2=>{
     x.beginPath(); x.ellipse(t2[0],t2[1],t2[2],t2[3],0,0,6.29); x.fill(); });
   x.restore(); x.globalAlpha=1;
-  x.fillStyle='#C9758A'; x.font=HD(700,36); x.textAlign='center';
+  x.fillStyle='#A66172'; x.font=HD(700,36); x.textAlign='center';
   x.globalAlpha=.88; x.fillText(t('Logged with Pastels : Your Pocket Bestie 🌸'),556,1806); x.globalAlpha=1;
   return cv;
 }

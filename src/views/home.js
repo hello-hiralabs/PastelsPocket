@@ -1,8 +1,8 @@
 import { BULAN_S, HARI_S, LANG, t, tf } from '../i18n.js';
-import { ENVS, cName, catOf } from '../constants.js';
+import { CATS, ENVS, cName, catOf } from '../constants.js';
 import { clamp, esc, fmt, ico, mkLabel, mkNow, num, pawStamp, rp, rpS, stk, today, zig } from '../utils.js';
 import { MO, db, tapeStyle, ui } from '../state.js';
-import { allowance, daysLeft, envNom, envPctSum, envSpent, hasOverride, spentOn, sums, wantsLeft } from '../calc.js';
+import { allowance, daysLeft, envNom, envOfCat, envPctSum, envSpent, hasOverride, spentOn, sums, wantsLeft } from '../calc.js';
 import { filterActive, filterBar } from '../filter.js';
 import { CAT_COL, catQuote, catScene, catState } from '../mascot.js';
 import { histDates, prevMonthWithData, storyItems, storyList } from '../history.js';
@@ -16,22 +16,23 @@ export function viewHome(){
   const left=Math.max(0,jatah-spent);
   const pct=jatah>0?clamp(spent/jatah*100,0,100):(spent>0?100:0);
   const cst=catState(left,jatah), ovr=hasOverride();
+  /* < 15% jatah = tanda bahaya: bar diberi garis bergerak + denyut halus */
+  const kritis = jatah>0 && left/jatah < .15;
   let html='';
 
   html+=
   '<section class="paper ruled tape p-4 pt-5 mb-5" style="'+tapeStyle('main','26px',104,-7)+'">'+
     '<div class="relative mb-3">'+
       '<div class="rounded-[18px] overflow-hidden" style="border:2.5px solid #EFDDE4;box-shadow:inset 0 2px 6px rgba(197,150,170,.18)" data-live="scene" data-cur="'+cst+'">'+catScene(cst)+'</div>'+
-      '<button data-act="kitty" aria-label="Ganti kucing" class="absolute top-2 right-2 flex items-center gap-1 pl-1.5 pr-2.5 py-1 rounded-full hand font-bold text-[11px]" style="background:rgba(255,253,249,.92);border:2px solid #EFDDE4">'+
-        ico('paw-prints',14,'🐾')+t('Ganti')+'</button>'+
     '</div>'+
-    '<p class="hand font-bold text-[13.5px] text-[#C9758A] flex items-center gap-1.5">'+t('Jatah Jajan Hari Ini 🧋')+
+    '<p class="hand font-bold text-[13.5px] text-[#A66172] flex items-center gap-1.5">'+t('Jatah Jajan Hari Ini 🧋')+
       '<button data-act="edit-limit" aria-label="Ubah limit" class="w-6 h-6 grid place-items-center rounded-full" style="background:#FFF3CD;border:2px solid #F7E7B8">'+ico('pencil',12,'✏️')+'</button>'+
       (ovr?'<span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full" style="background:#F5D96B;color:#5A4E4D">'+t('custom')+'</span>':'')+'</p>'+
     '<p class="font-extrabold text-[38px] leading-[1.15] money mt-0.5" data-live="left">'+rp(left)+'</p>'+
     '<p class="hand text-[12.5px] text-soft mt-0.5" data-live="kata">'+esc(catQuote(cst))+'</p>'+
+    (kritis?'<p class="hand text-[11.5px] font-bold mt-0.5" style="color:#D4796A">'+t('Jatah hampir habis!')+'</p>':'')+
     '<div class="mt-4">'+
-      '<div class="track" style="height:15px"><div class="fill" data-live="bar" style="width:'+pct+'%;background-color:'+CAT_COL[cst]+'"></div></div>'+
+      '<div class="track'+(kritis?' alert-ring':'')+'" data-live="bartrack" style="height:15px"><div class="fill'+(kritis?' fill-alert':'')+'" data-live="bar" style="width:'+pct+'%;background-color:'+CAT_COL[cst]+'"></div></div>'+
       '<div class="flex justify-between text-[11px] text-soft mt-1.5 px-0.5">'+
         '<span class="hand font-semibold" data-live="spent">'+esc(tf('Kepake {0}',rpS(spent)))+'</span>'+
         '<span class="hand font-semibold">'+esc(tf('dari limit jajan {0}/hari',rpS(jatah)))+'</span>'+
@@ -79,7 +80,7 @@ export function viewHome(){
       hist+=
       '<div class="mb-4 last:mb-0">'+
         '<div class="flex items-center gap-2 mb-1.5">'+
-          '<span class="hand font-bold text-[13px] px-2.5 py-0.5 rounded-full" style="background:'+(ds===today()?'#FFEAF0':'#FDF5F8')+';color:'+(ds===today()?'#E4718A':'#8C7F7E')+'">'+esc(label)+'</span>'+
+          '<span class="hand font-bold text-[13px] px-2.5 py-0.5 rounded-full" style="background:'+(ds===today()?'#FFEAF0':'#FDF5F8')+';color:'+(ds===today()?'#E4718A':'#7E7271')+'">'+esc(label)+'</span>'+
           '<span class="flex-1 border-b-2 border-dotted border-[#EEDEE4]"></span>'+
           '<span class="text-[11.5px] text-soft money font-bold">'+rpS(tot)+'</span>'+
         '</div>'+
@@ -90,7 +91,7 @@ export function viewHome(){
             '<div class="flex-1 min-w-0">'+
               '<p class="hand text-[14px] font-semibold truncate leading-tight">'+esc(x.note||cName(c))+'</p>'+
               '<p class="text-[10.5px] text-soft">'+esc(cName(c))+(x.rec?' · '+t('otomatis'):'')+'</p></div>'+
-            '<span class="font-extrabold text-[14px] money shrink-0" style="color:'+(x.cat==='celengan'?'#7FA878':'#5A4E4D')+'">'+(x.cat==='celengan'?'+':'−')+rpS(x.amount)+'</span>'+
+            '<span class="font-extrabold text-[14px] money shrink-0" style="color:'+(x.cat==='celengan'?'#5D7C58':'#5A4E4D')+'">'+(x.cat==='celengan'?'+':'−')+rpS(x.amount)+'</span>'+
             '<button data-act="del-tx" data-id="'+x.id+'" aria-label="Hapus" class="w-6 h-6 grid place-items-center text-[#CBBCC0] font-bold text-[15px] shrink-0">×</button>'+
           '</div>';
         }).join('')+
@@ -132,7 +133,7 @@ export function viewHome(){
       if(prev||!isCur){
         ctrl+='<div class="mt-3 pt-3 border-t-2 border-dotted border-[#EEDEE4] flex gap-2">'+
           (prev?'<button data-act="hist-month" data-mk="'+prev+'" class="chip hand flex-1 text-center !text-[11.5px]">◀ '+esc(tf('Buka {0}',mkLabel(prev)))+'</button>':'')+
-          (!isCur?'<button data-act="hist-now" class="chip hand flex-1 text-center !text-[11.5px]" style="background:#FFF6E2;border-color:#F7E6B6;color:#8A7565">'+t('Balik ke bulan ini')+'</button>':'')+
+          (!isCur?'<button data-act="hist-now" class="chip hand flex-1 text-center !text-[11.5px]" style="background:#FFF6E2;border-color:#F7E6B6;color:#786557">'+t('Balik ke bulan ini')+'</button>':'')+
         '</div>';
       }
     }
@@ -147,7 +148,7 @@ export function viewHome(){
           '<p class="hand font-bold text-[15.5px] leading-tight">'+t('Struk Jajan Kamu 🧾')+'</p>'+
           '<p class="text-[8.5px] font-bold tracking-[.16em] text-soft mt-0.5">'+t('PASTELS · YOUR POCKET BESTIE')+'</p>'+
         '</div>'+
-        (isCur?'':'<button data-act="hist-now" class="hand text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap shrink-0" style="background:#FFF6E2;border:2px solid #F7E6B6;color:#8A7565">'+t('Balik ke bulan ini')+'</button>')+
+        (isCur?'':'<button data-act="hist-now" class="hand text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap shrink-0" style="background:#FFF6E2;border:2px solid #F7E6B6;color:#786557">'+t('Balik ke bulan ini')+'</button>')+
       '</div>'+
       '<p class="text-center text-[10.5px] text-soft mt-1 mb-2">'+esc(mkLabel(hmk)+' · '+(H.filtered?t('Hasil pencarian'):capt)+' · '+tf('{0} hari tercatat',H.shown.length))+'</p>'+
       '<div class="dotline mb-2"></div>'+
@@ -175,7 +176,7 @@ export function viewHome(){
   if(H.all.length){
     html+='<section class="paper tape p-4 pt-5 mb-5" style="'+tapeStyle('main','24px',72,4)+';background:linear-gradient(165deg,#FFFDFB,#FFFAEA)">'+
       cardHead(tf('Cerita {0}',mkLabel(hmk)),'notebook-with-decorative-cover','#FCE9B8','📔',
-        '<button data-act="go-recap" data-mk="'+hmk+'" class="hand text-[11px] font-bold whitespace-nowrap" style="color:#8A7565">'+t('Rekap lengkap')+' ▸</button>')+
+        '<button data-act="go-recap" data-mk="'+hmk+'" class="hand text-[11px] font-bold whitespace-nowrap" style="color:#786557">'+t('Rekap lengkap')+' ▸</button>')+
       storyList(storyItems(hmk).slice(0,3))+
     '</section>';
   }
@@ -184,7 +185,7 @@ export function viewHome(){
   '<section class="paper tape p-5 pt-6 mb-2 text-center" style="'+tapeStyle('goal','calc(50% - 44px)',88,3)+';background:linear-gradient(160deg,#FAF4F7,#EEF6F3)">'+
     '<div class="inline-block mb-2">'+stk('people-hugging',{size:60,ic:36,tone:'#DCD2E8',rot:-3,fb:'👭'})+'</div>'+
     '<h2 class="hand font-bold text-[16px] mb-1">'+(LANG==='en'?'Save-Off With Your Bestie':'Challenge Hemat Bareng Bestie')+'</h2>'+
-    '<p class="text-[12.5px] text-[#7E8A86] leading-relaxed mb-3 px-2">'+
+    '<p class="text-[12.5px] text-[#66706D] leading-relaxed mb-3 px-2">'+
       (LANG==='en'?'A week-long saving duel, cheering each other on, racing for the winner sticker. Coming soon 💖'
                  :'Adu hemat seminggu, saling nyemangatin, rebutan stiker juara. Coming soon 💖')+'</p>'+
     '<button data-act="soon" class="chip hand">'+(LANG==='en'?'Notify me later':'Notify me nanti ya')+'</button>'+
@@ -206,22 +207,37 @@ export function envCard(mk){
         stk(e.i,{size:36,ic:21,tone:e.tone,fb:e.f})+
         '<div class="flex-1 min-w-0">'+
           '<p class="hand font-bold text-[13.5px] leading-tight">'+esc(LANG==='en'?e.en:e.n)+'</p>'+
-          '<p class="text-[10.5px] text-soft">'+esc(tf('Kepake {0} dari {1}',rpS(used),rpS(alloc)))+'</p>'+
         '</div>'+
         '<div class="flex items-center gap-1 shrink-0">'+
-          '<input type="text" inputmode="numeric" data-field="env:'+e.k+':pct" value="'+num(db.env[e.k].pct)+'" class="field !py-1 !px-1.5 w-[44px] text-center font-extrabold text-[12.5px]">'+
+          '<input type="text" inputmode="numeric" data-field="env:'+e.k+':pct" data-live="envpct:'+e.k+'" value="'+num(db.env[e.k].pct)+'" class="field !py-1 !px-1.5 w-[44px] text-center font-extrabold text-[12.5px]">'+
           '<span class="text-[11px] text-soft font-bold">%</span>'+
         '</div>'+
-        '<input type="text" inputmode="numeric" data-money="1" data-field="env:'+e.k+':nom" value="'+fmt(alloc)+'" class="field !py-1 !px-2 w-[92px] text-right money font-extrabold text-[12.5px] shrink-0">'+
+        '<input type="text" inputmode="numeric" data-money="1" data-field="env:'+e.k+':nom" data-live="envnom:'+e.k+'" value="'+fmt(alloc)+'" class="field !py-1 !px-2 w-[92px] text-right money font-extrabold text-[12.5px] shrink-0">'+
       '</div>'+
-      '<div class="track" style="height:9px"><div class="fill" style="width:'+p+'%;background-color:'+(over?'#FF8299':e.solid)+'"></div></div>'+
+      '<div class="track" style="height:9px"><div class="fill" data-live="envbar:'+e.k+'" style="width:'+p+'%;background-color:'+(over?'#FF8299':e.solid)+'"></div></div>'+
+      '<p class="text-[10.5px] text-soft mt-1" data-live="envused:'+e.k+'">'+esc(tf('Kepake {0} dari {1}',rpS(used),rpS(alloc)))+'</p>'+
     '</div>';
   });
+
+  /* Dropdown: kategori jajan mana masuk amplop mana.
+     Disembunyikan di belakang <details> supaya kartu tidak ramai. */
+  const envOpts=k=>ENVS.map(e=>'<option value="'+e.k+'"'+(envOfCat(k)===e.k?' selected':'')+'>'+esc(LANG==='en'?e.en:e.n)+'</option>').join('');
+  const peta=CATS.map(c=>
+    '<div class="flex items-center gap-2 py-1.5 border-b border-dotted border-[#F6E8EE] last:border-0">'+
+      stk(c.i,{size:30,ic:18,tone:c.c,fb:c.f})+
+      '<span class="hand text-[12.5px] font-semibold flex-1 min-w-0 truncate">'+esc(cName(c))+'</span>'+
+      '<select data-field="catenv:'+c.k+'" class="field !py-1 !px-2 text-[11.5px] w-[124px] shrink-0">'+envOpts(c.k)+'</select>'+
+    '</div>').join('');
   return '<section class="paper tape p-4 pt-5 mb-5" style="'+tapeStyle('main','24px',84,4)+'">'+
     cardHead(t('Amplop Bulan Ini 🧺'),'card-file-box','#F7E7B8','🧺',
-      '<span class="hand text-[11px] font-bold '+(pctSum===100?'text-soft':'text-[#FF8299]')+'">'+esc(tf('Total amplop {0}% dari cuan masuk',pctSum))+'</span>')+
+      '<span class="hand text-[11px] font-bold '+(pctSum===100?'text-soft':'text-[#FF8299]')+'" data-live="envtotal">'+esc(tf('Total amplop {0}% dari cuan masuk',pctSum))+'</span>')+
     '<p class="text-[12px] text-soft mb-1 -mt-1">'+t('Bagi otomatis dari cuan masuk, atau ketik nominal sendiri.')+'</p>'+
     rows+
     '<button data-act="autosplit" class="mt-3 w-full py-2.5 rounded-2xl hand text-[13.5px] font-bold active:scale-[.98] transition" style="background:#FFF3CD;border:2.5px solid #F7E7B8;box-shadow:0 3px 0 #F7E7B8">'+t('Auto-Split 50/30/20')+'</button>'+
+    '<details class="mt-3">'+
+      '<summary class="hand text-[12.5px] font-bold text-soft cursor-pointer py-1">'+t('Atur kategori tiap amplop')+'</summary>'+
+      '<p class="text-[11.5px] text-soft mt-1 mb-2">'+t('Yang masuk Jatah Jajan ikut menentukan limit harianmu.')+'</p>'+
+      peta+
+    '</details>'+
   '</section>';
 }

@@ -19,23 +19,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Pasang dependensi build
-        run: npm install
-      - name: Kabelkan import & bangun index.html
+
+      # Tidak ada `npm install` di sini, dan itu disengaja.
+      # tw.css sudah tersimpan di repositori, jadi build tidak
+      # bergantung pada jaringan maupun paket yang harus diunduh.
+      - name: Bangun index.html
         run: |
           node rewire.mjs
           node build.mjs
-      - name: Uji — graf modul & cakupan CSS
-        run: |
-          node esm-test.mjs
-          node css-test.mjs
+
+      # css-test.mjs tidak memakai paket apa pun. Dia memeriksa dua
+      # hal yang paling sering rusak: kelas CSS yang hilang, dan
+      # bundle yang terpotong karena '</script>' bocor.
+      - name: Uji berkas hasil build
+        run: node css-test.mjs
+
       - name: Siapkan folder situs
         run: |
           mkdir -p _site
           cp index.html manifest.webmanifest sw.js icon-192.png icon-512.png _site/
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

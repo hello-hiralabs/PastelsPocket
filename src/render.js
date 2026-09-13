@@ -39,7 +39,11 @@ export function refresh(){
   set('kata',catQuote(cst));
   const sc=$('[data-live="scene"]');
   if(sc && sc.dataset.cur!==cst){ sc.dataset.cur=cst; sc.innerHTML=catScene(cst); }
+  const kritis = jatah>0 && Math.max(0,jatah-spent)/jatah < .15;
+  const trk=$('[data-live="bartrack"]');
+  if(trk) trk.classList.toggle('alert-ring',kritis);
   const bar=$('[data-live="bar"]');
+  if(bar) bar.classList.toggle('fill-alert',kritis);
   if(bar){ bar.style.width=(jatah>0?clamp(spent/jatah*100,0,100):(spent>0?100:0))+'%'; bar.style.backgroundColor=CAT_COL[cst]; }
   db.goals.forEach(g=>{
     const p=num(g.target)>0?clamp(num(g.saved)/num(g.target)*100,0,100):0;

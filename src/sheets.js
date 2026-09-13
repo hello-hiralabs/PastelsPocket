@@ -3,7 +3,7 @@ import { AVATARS, BADGES, CATS, GOAL_KINDS, bDesc, bName, cName, clayVars, kName
 import { esc, fmt, mkLabel, mkNow, num, prettyDate, rp, rpS, stk, today } from './utils.js';
 import { db, tapeStyle, ui } from './state.js';
 import { DS } from './data-service.js';
-import { autoAllowance, hasOverride, sums } from './calc.js';
+import { autoAllowance, hasOverride, sums, topAmounts } from './calc.js';
 import { recList, recMonthlyTotal } from './recurring.js';
 import { sheet } from './sheet.js';
 import { CAT_KINDS, ROOMS, catAvatar, ckName, roomName } from './mascot.js';
@@ -13,6 +13,10 @@ import { cardHead } from './views/header.js';
    15. SHEET
    ========================================================= */
 export function quickSheet(){
+  /* dihitung untuk kategori yang sedang dipilih; kalau belum cukup
+     data, jatuh ke kebiasaan lintas kategori */
+  let sering=topAmounts(ui.quick.cat,3);
+  if(sering.length<2) sering=topAmounts(null,3);
   const grid=CATS.map(c=>
     '<button data-act="pick-cat" data-k="'+c.k+'" class="catbtn" aria-pressed="'+(ui.quick.cat===c.k)+'">'+
       stk(c.i,{size:38,ic:23,tone:c.c,fb:c.f})+
@@ -22,12 +26,21 @@ export function quickSheet(){
     '<p class="text-[12.5px] text-soft mb-4">'+t('Berapa dan buat apa? Cuma dua ketukan kok.')+'</p>'+
     '<div class="paper tape p-4 pt-5 mb-4" style="'+tapeStyle('main','22px',70,-6)+';background:linear-gradient(150deg,#FFF1F5,#FFFAEA)">'+
       '<div class="amtbox flex items-center gap-2">'+
-        '<span class="hand font-bold text-[21px] shrink-0 text-[#C9758A]">Rp</span>'+
+        '<span class="hand font-bold text-[21px] shrink-0 text-[#A66172]">Rp</span>'+
         '<input id="qa" type="text" inputmode="numeric" data-money="1" value="'+(ui.quick.amount?fmt(ui.quick.amount):'')+'" placeholder="0" class="bigamt bg-transparent border-0 p-0 font-extrabold text-[32px] money">'+
       '</div>'+
       '<div class="flex gap-1.5 mt-3">'+
         [5000,10000,20000,50000].map(v=>'<button data-act="qplus" data-v="'+v+'" class="chip hand flex-1 !px-1 text-center">+'+(v/1000)+'rb</button>').join('')+
       '</div>'+
+      /* Preset dari kebiasaan sendiri: nominal yang paling sering dicatat
+         di kategori terpilih. Sekali ketuk langsung set, bukan menambah. */
+      (sering.length
+        ? '<div class="mt-2.5 pt-2.5 border-t-2 border-dotted border-[#F6E8EE]">'+
+            '<p class="hand text-[10.5px] font-bold text-soft mb-1.5">'+t('Yang biasa kamu catat')+'</p>'+
+            '<div class="flex gap-1.5">'+
+              sering.map(o=>'<button data-act="qset" data-v="'+o.amount+'" class="chip hand flex-1 !px-1 text-center" style="background:#FFF4F7;border-color:#FFD2E0">'+rpS(o.amount)+'</button>').join('')+
+            '</div></div>'
+        : '')+
     '</div>'+
     '<div class="grid grid-cols-4 gap-2 mb-4">'+grid+'</div>'+
     '<div class="grid grid-cols-2 gap-2 mb-4">'+
@@ -97,7 +110,7 @@ export function recurringSheet(){
         stk(c.i,{size:36,ic:21,tone:c.c,fb:c.f})+
         '<input type="text" data-field="rec:'+r.id+':label" value="'+esc(r.label)+'" placeholder="'+esc(t('Nama tagihan'))+'" class="flatfield hand text-[14px] font-bold flex-1 min-w-0">'+
         '<button data-act="rec-toggle" data-id="'+r.id+'" class="shrink-0 hand text-[10.5px] font-bold px-2.5 py-1 rounded-full" '+
-          'style="background:'+(r.active?'#E2F0D9':'#F3E7EA')+';border:2px solid '+(r.active?'#A3C79B':'#EDDCE3')+';color:'+(r.active?'#5F7A5A':'#8C7F7E')+'">'+
+          'style="background:'+(r.active?'#E2F0D9':'#F3E7EA')+';border:2px solid '+(r.active?'#A3C79B':'#EDDCE3')+';color:'+(r.active?'#5F7A5A':'#7E7271')+'">'+
           t(r.active?'Aktif':'Dijeda')+'</button>'+
         '<button data-act="rec-del" data-id="'+r.id+'" aria-label="Hapus" class="shrink-0 w-6 h-6 grid place-items-center text-[#CBBCC0] font-bold text-[15px]">×</button>'+
       '</div>'+
@@ -114,10 +127,32 @@ export function recurringSheet(){
   sheet(
     '<h2 class="hand font-bold text-[21px] mb-1">'+t('Tagihan Berulang 🔁')+'</h2>'+
     '<p class="text-[12.5px] text-soft mb-3">'+t('Dicatat otomatis tiap bulan begitu tanggalnya lewat.')+'</p>'+
-    '<p class="hand text-[12px] font-bold mb-3" style="color:#A88B49">'+esc(tf('Komitmen bulanan {0}',rp(recMonthlyTotal())))+'</p>'+
+    '<p class="hand text-[12px] font-bold mb-3" style="color:#89713B">'+esc(tf('Komitmen bulanan {0}',rp(recMonthlyTotal())))+'</p>'+
     rows+
     '<button data-act="rec-add" class="w-full py-3 rounded-2xl dashed hand font-bold text-[13.5px] text-soft mb-2 active:scale-[.98] transition">'+t('+ Tambah Tagihan')+'</button>'+
     '<button data-act="close" class="clay w-full py-3.5 hand font-bold text-[15px] mb-1">'+t('Selesai')+'</button>');
+}
+
+/* Dua tingkat reset, masing-masing masih minta konfirmasi lagi.
+   Tombol di sini sengaja tidak langsung menghapus apa pun. */
+export function resetSheet(){
+  sheet(
+    '<h2 class="hand font-bold text-[21px] mb-1">'+t('Mau reset yang mana? 🧹')+'</h2>'+
+    '<p class="text-[12.5px] text-soft mb-4">'+t('Pilih salah satu. Keduanya minta konfirmasi lagi sebelum jalan.')+'</p>'+
+
+    '<button data-act="reset-month-ask" class="w-full text-left p-3.5 rounded-[20px] mb-2.5 active:scale-[.98] transition" style="background:#FFFAEA;border:2.5px solid #F7E7B8;box-shadow:0 3px 0 #F7E7B8">'+
+      '<div class="flex items-center gap-2.5 mb-1">'+stk('spiral-calendar',{size:34,ic:20,tone:'#F7E7B8',fb:'📅'})+
+        '<span class="hand font-bold text-[14.5px]">'+t('Reset Bulan Ini')+'</span></div>'+
+      '<p class="text-[11.5px] text-soft leading-snug">'+esc(tf('Hapus catatan jajan & amplop {0}. Celengan, stiker, dan tagihan berulang tetap aman.',mkLabel(mkNow())))+'</p>'+
+    '</button>'+
+
+    '<button data-act="reset-all-ask" class="w-full text-left p-3.5 rounded-[20px] mb-4 active:scale-[.98] transition" style="background:#FFF1F5;border:2.5px solid #FFD2E0;box-shadow:0 3px 0 #FFD2E0">'+
+      '<div class="flex items-center gap-2.5 mb-1">'+stk('pleading-face',{size:34,ic:20,tone:'#FFD2E0',fb:'🥺'})+
+        '<span class="hand font-bold text-[14.5px]">'+t('Reset Total')+'</span></div>'+
+      '<p class="text-[11.5px] text-soft leading-snug">'+t('Hapus semua: catatan, celengan, stiker, washi, tagihan, dan pengaturan.')+'</p>'+
+    '</button>'+
+
+    '<button data-act="close" class="w-full py-3.5 rounded-2xl bg-white hand font-bold text-[15px] mb-1" style="border:2.5px solid #F3E7EA;box-shadow:0 3px 0 #FBF0F4">'+t('Nggak jadi')+'</button>');
 }
 
 export function limitSheet(){
@@ -127,7 +162,7 @@ export function limitSheet(){
     '<p class="text-[12.5px] text-soft mb-4">'+t('Ada acara khusus? Timpa limit otomatis buat hari ini aja.')+'</p>'+
     '<div class="paper tape p-4 pt-5 mb-3" style="'+tapeStyle('main','22px',70,-6)+';background:#FFFAEA;border-color:#F7E7B8">'+
       '<div class="amtbox flex items-center gap-2">'+
-        '<span class="hand font-bold text-[21px] shrink-0 text-[#8A7565]">Rp</span>'+
+        '<span class="hand font-bold text-[21px] shrink-0 text-[#786557]">Rp</span>'+
         '<input id="la" type="text" inputmode="numeric" data-money="1" value="'+(cur===''?'':fmt(cur))+'" placeholder="'+fmt(auto)+'" class="bigamt bg-transparent border-0 p-0 font-extrabold text-[32px] money">'+
       '</div>'+
       '<p class="hand text-[11.5px] text-soft mt-2">'+esc(tf('Hitungan otomatisnya {0}',rp(auto)))+'</p>'+
@@ -149,7 +184,7 @@ export function emojiSheet(id){
         return '<button data-act="set-emoji" data-id="'+id+'" data-e="'+k.i+'" class="stk-press flex flex-col items-center gap-1.5 p-2.5 rounded-[20px]" '+
           'style="background:'+(on?k.soft:'#fff')+';border:2.5px solid '+(on?k.solid:'#F3E7EA')+';box-shadow:0 3px 0 '+(on?k.tone:'#FBF0F4')+'">'+
           stk(k.i,{size:44,ic:27,tone:k.tone,fb:k.f})+
-          '<span class="hand text-[10.5px] font-bold leading-tight text-center" style="color:'+(on?k.dark:'#8C7F7E')+'">'+esc(kName(k))+'</span>'+
+          '<span class="hand text-[10.5px] font-bold leading-tight text-center" style="color:'+(on?k.dark:'#7E7271')+'">'+esc(kName(k))+'</span>'+
         '</button>';
       }).join('')+
     '</div>');
@@ -185,7 +220,7 @@ export function settingsSheet(){
     /* --- akun & sinkron: kerangka Data Service Layer --- */
     '<div class="paper p-4 mb-4" style="background:#F4F1FA;border-color:#DDD8EA">'+
       cardHead(t('Akun & Sinkron ☁️'),'bank','#DDD8EA','🏦')+
-      '<p class="text-[12px] leading-relaxed mb-3" style="color:#6E6884">'+
+      '<p class="text-[12px] leading-relaxed mb-3" style="color:#5B566E">'+
         esc(tf('Mode sekarang: {0}',DS.label(LANG==='en')))+
         (DS.cloudAvailable()?'':'<br>'+esc(t('Sinkron cloud belum disetel. Isi kunci Supabase di src/data-service.js dulu.')))+'</p>'+
       (DS.cloudAvailable()
@@ -196,8 +231,8 @@ export function settingsSheet(){
     '</div>'+
     '<div class="paper p-4 mb-4" style="background:#FFFAEA;border-color:#F7E7B8">'+
       cardHead(t('Pasang di Home Screen 📱'),'mobile-phone','#F7E7B8','📱')+
-      '<p class="text-[12px] text-[#8A7565] leading-relaxed">'+t('Buka di Safari → ketuk ikon Share → pilih “Add to Home Screen”. Jadi kayak app beneran!')+'</p></div>'+
-    '<button data-act="reset-ask" class="w-full py-3 rounded-2xl hand font-bold text-[14px] mb-3" style="background:#FFE3EA;border:2px solid #FFD2E0">'+t('Reset semua data')+'</button>'+
+      '<p class="text-[12px] text-[#786557] leading-relaxed">'+t('Buka di Safari → ketuk ikon Share → pilih “Add to Home Screen”. Jadi kayak app beneran!')+'</p></div>'+
+    '<button data-act="reset-open" class="w-full py-3 rounded-2xl hand font-bold text-[14px] mb-3" style="background:#FFE3EA;border:2px solid #FFD2E0">'+t('Reset Data')+'</button>'+
     '<p class="hand text-center text-[12px] font-bold text-soft pb-0.5">'+t('Pastels : Your Pocket Bestie 🎀')+'</p>'+
     '<p class="hand text-center text-[11px] text-soft pb-1">'+t('dibuat manis buat kamu')+'</p>');
 }

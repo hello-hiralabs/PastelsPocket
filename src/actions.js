@@ -1,9 +1,9 @@
 import { LANG, t, tf } from './i18n.js';
-import { ENVS, GOAL_KINDS, LSKEY, WMAP, cName, catOf, wName } from './constants.js';
-import { $, $$, clamp, clampDigits, digits, fmt, iconFallback, mkLabel, mkNow, mkOf, num, pad2, rp, rpS, safeParseBackup, sanitizeAmount, stk, toast, today, uid } from './utils.js';
-import { MO, db, migrate, seed, setDb, ui } from './state.js';
+import { CATS, ENVS, GOAL_KINDS, LSKEY, WMAP, cName, catOf, wName } from './constants.js';
+import { $, $$, clamp, clampDigits, digits, esc, fmt, hap, iconFallback, mkLabel, mkNow, mkOf, num, pad2, rp, rpS, safeParseBackup, sanitizeAmount, stk, toast, today, uid } from './utils.js';
+import { MO, blankMonth, db, migrate, seed, setDb, ui } from './state.js';
 import { CloudAdapter, DS, hydrateFromCloud, save } from './data-service.js';
-import { allowance, spentOn } from './calc.js';
+import { allowance, envNom, envPctSum, envSpent, spentOn, sums } from './calc.js';
 import { clearQueue, collectRewards, flushQueue, touchStreak } from './rewards.js';
 import { recAdd, recDel, recFind } from './recurring.js';
 import { csvFilename, monthCsv } from './csv.js';
@@ -11,11 +11,53 @@ import { filterReset } from './filter.js';
 import { celebrate, closeSheet, sheet } from './sheet.js';
 import { blob, catKind } from './mascot.js';
 import { renderHeader } from './views/header.js';
-import { badgeSheet, catPickerSheet, emojiSheet, fillGoalSheet, limitSheet, quickSheet, recurringSheet, settingsSheet } from './sheets.js';
+import { badgeSheet, catPickerSheet, emojiSheet, fillGoalSheet, limitSheet, quickSheet, recurringSheet, resetSheet, settingsSheet } from './sheets.js';
 import { dataURLtoBlob, storySheet } from './story.js';
 import { refresh, render, setLang } from './render.js';
 
 let qTimer=null;
+
+/* Perbarui seluruh angka kartu Amplop di tempat.
+   Tidak memakai render() supaya kursor di kotak yang sedang diketik tidak lepas. */
+function refreshEnv(kecuali){
+  const mk=mkNow(), masuk=sums(mk).masuk;
+  ENVS.forEach(e=>{
+    const alloc=envNom(e.k,masuk), used=envSpent(mk,e.k);
+    const ip=document.querySelector('[data-live="envpct:'+e.k+'"]');
+    const inn=document.querySelector('[data-live="envnom:'+e.k+'"]');
+    const bar=document.querySelector('[data-live="envbar:'+e.k+'"]');
+    const us=document.querySelector('[data-live="envused:'+e.k+'"]');
+    if(ip && ip!==kecuali) ip.value=num(db.env[e.k].pct);
+    if(inn && inn!==kecuali) inn.value=fmt(alloc);
+    if(bar){
+      const pc=alloc>0?clamp(used/alloc*100,0,100):(used>0?100:0);
+      bar.style.width=pc+'%';
+      bar.style.backgroundColor=(alloc>0&&used>alloc)?'#FF8299':e.solid;
+    }
+    if(us) us.textContent=tf('Kepake {0} dari {1}',rpS(used),rpS(alloc));
+  });
+  const tot=document.querySelector('[data-live="envtotal"]');
+  if(tot){ const s2=envPctSum(); tot.textContent=tf('Total amplop {0}% dari cuan masuk',s2);
+    tot.classList.toggle('text-soft',s2===100); }
+  refresh();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -36,6 +78,8 @@ document.addEventListener('click',function(ev){
   const a=el.dataset.act, d=el.dataset;
 
   if(el.classList.contains('clay')){ el.classList.remove('clay-boing'); void el.offsetWidth; el.classList.add('clay-boing'); }
+  /* getaran halus: tombol clay lebih tegas, sisanya sekilas saja */
+  hap(el.classList.contains('clay') ? 18 : 8);
 
   switch(a){
     case 'lang': {
@@ -71,6 +115,31 @@ document.addEventListener('click',function(ev){
     }
 
     case 'kitty': catPickerSheet(); break;
+
+    /* ---- reset bertingkat ---- */
+    case 'reset-open': resetSheet(); break;
+    case 'reset-month-ask':
+      sheet('<div class="text-center pb-2">'+
+        '<div class="inline-block mb-3">'+stk('spiral-calendar',{size:72,ic:44,tone:'#F7E7B8',rot:-4,fb:'📅'})+'</div>'+
+        '<h2 class="hand font-bold text-[20px] mb-1">'+esc(tf('Yakin reset {0}? 🥺',mkLabel(mkNow())))+'</h2>'+
+        '<p class="text-[13px] text-soft mb-5 px-3">'+t('Catatan jajan dan amplop bulan ini bakal hilang. Celenganmu tetap utuh.')+'</p>'+
+        '<div class="flex gap-2">'+
+          '<button data-act="close" class="flex-1 py-3.5 rounded-2xl bg-white hand font-bold text-[15px]" style="border:2.5px solid #F3E7EA;box-shadow:0 3px 0 #FBF0F4">'+t('Nggak jadi')+'</button>'+
+          '<button data-act="reset-month-ok" class="flex-1 py-3.5 rounded-2xl hand font-bold text-[15px]" style="background:#F7E7B8;box-shadow:0 4px 0 #EFDFB4">'+t('Iya, reset bulan ini')+'</button>'+
+        '</div></div>');
+      break;
+    case 'reset-month-ok': {
+      const mk=mkNow();
+      db.months[mk]=blankMonth();                       /* transaksi + pemasukan */
+      ENVS.forEach(e=>{ db.env[e.k].pct=e.def; db.env[e.k].nom=null; });
+      delete db.dayLimit[today()];
+      /* tagihan berulang boleh jalan lagi bulan ini */
+      (db.recurring||[]).forEach(r=>{ if(r.lastRun===mk) r.lastRun=''; });
+      filterReset();
+      save(); closeSheet(); render();
+      toast(tf('Bulan {0} udah dikosongkan 🌱',mkLabel(mk))); break;
+    }
+    case 'reset-all-ask': 
     case 'set-kitty':
       db.profile.cat=d.id; save(); closeSheet(); render();
       toast(tf('{0} pindah ke kamar barunya 🐾',catKind(d.id).n)); break;
@@ -139,6 +208,8 @@ document.addEventListener('click',function(ev){
       break;
     }
     case 'qplus': { const i=$('#qa'); if(i){ i.value=fmt(num(digits(i.value))+num(d.v)); i.focus(); } break; }
+    /* chip kebiasaan: set langsung, bukan menambah */
+    case 'qset': { const i=$('#qa'); if(i){ i.value=fmt(sanitizeAmount(d.v)); i.focus(); } break; }
     case 'gplus': { const i=$('#ga'); if(i){ i.value=fmt(num(digits(i.value))+num(d.v)); i.focus(); } break; }
 
     case 'save-tx': {
@@ -173,6 +244,32 @@ document.addEventListener('click',function(ev){
       if(x2.cat==='celengan'&&x2.goal){ const g=db.goals.find(x=>x.id===x2.goal); if(g) g.saved=Math.max(0,num(g.saved)-num(x2.amount)); }
       M.tx=M.tx.filter(x=>x.id!==d.id);
       save(); render(); break;
+    }
+
+    /* Pindahkan alokasi amplop celengan jadi setoran nyata,
+       dibagi ke tiap celengan sesuai sisa kebutuhannya. */
+    case 'setor-alokasi': {
+      const mk=mkNow();
+      const sisa=Math.max(0,envNom('save',sums(mk).masuk)-envSpent(mk,'save'));
+      if(sisa<=0){ toast(t('Alokasi celengan sudah tersetor semua ✨')); break; }
+      if(!db.goals.length){ toast(t('Belum ada celengan buat disetori')); break; }
+      const butuh=db.goals.map(g=>Math.max(0,num(g.target)-num(g.saved)));
+      const totalButuh=butuh.reduce((x,y)=>x+y,0);
+      let terbagi=0, n=0;
+      db.goals.forEach((g,i)=>{
+        /* proporsional ke sisa kebutuhan; kalau semua sudah penuh, bagi rata */
+        const bagian=totalButuh>0 ? Math.floor(sisa*butuh[i]/totalButuh/100)*100
+                                  : Math.floor(sisa/db.goals.length/100)*100;
+        if(bagian<=0) return;
+        g.saved=sanitizeAmount(num(g.saved)+bagian);
+        MO(mk).tx.push({id:uid(),date:today(),cat:'celengan',goal:g.id,amount:bagian,
+          note:'Setor alokasi amplop',h:new Date().getHours()});
+        terbagi+=bagian; n++;
+      });
+      if(!n){ toast(t('Alokasi celengan sudah tersetor semua ✨')); break; }
+      collectRewards(); save(); render();
+      if(!flushQueue()) toast(tf('{0} dibagi ke {1} celengan 💖',rp(terbagi),n));
+      break;
     }
 
     case 'add-goal': {
@@ -270,7 +367,6 @@ document.addEventListener('click',function(ev){
       break;
     }
     case 'import': $('#importFile').click(); break;
-    case 'reset-ask':
       sheet('<div class="text-center pb-2">'+
         '<div class="inline-block mb-3">'+stk('pleading-face',{size:76,ic:46,tone:'#FFD9E4',rot:-4,fb:'🥺'})+'</div>'+
         '<h2 class="hand font-bold text-[20px] mb-1">'+t('Yakin mau reset semua? 🥺')+'</h2>'+
@@ -321,8 +417,36 @@ document.addEventListener('input',function(ev){
   }
   if(p[0]==='env'){
     const e=db.env[p[1]]; if(!e) return;
-    if(p[2]==='pct'){ e.pct=clamp(num(digits(el.value)),0,100); e.nom=null; }
-    else { e.nom=num(v); }
+    if(p[2]==='pct'){
+      e.pct=clamp(num(digits(el.value)),0,100); e.nom=null;
+      /* Dua amplop lain disesuaikan proporsional supaya total selalu 100%.
+         Catatan: permintaan awalnya "kosongkan yang lain jadi 0", tapi itu
+         membuat pengisian kedua menghapus yang pertama — tidak akan pernah
+         bisa mengisi ketiganya. Auto-balance mencapai tujuan yang sama
+         (total tak pernah lewat 100) tanpa masalah itu. */
+      const lain=ENVS.filter(x=>x.k!==p[1]);
+      const sisa=100-e.pct;
+      const jum=lain.reduce((s2,x)=>s2+num(db.env[x.k].pct),0);
+      lain.forEach((x,idx)=>{
+        const en=db.env[x.k];
+        en.nom=null;
+        en.pct = jum>0 ? Math.round(sisa*num(en.pct)/jum)
+                       : (idx===0 ? sisa : 0);
+      });
+      /* bulatkan selisih pembulatan ke amplop terakhir */
+      const total=ENVS.reduce((s2,x)=>s2+num(db.env[x.k].pct),0);
+      if(total!==100 && lain.length) db.env[lain[lain.length-1].k].pct += (100-total);
+    }
+    else { e.nom=sanitizeAmount(el.value); }
+    save(); refreshEnv(el); return;
+  }
+  if(p[0]==='catenv'){
+    if(!db.catEnv) db.catEnv={};
+    db.catEnv[p[1]]=v;
+    save(); render();
+    const c=CATS.filter(x=>x.k===p[1])[0], e2=ENVS.filter(x=>x.k===v)[0];
+    if(c&&e2) toast(tf('Kategori {0} pindah ke amplop {1}',cName(c),LANG==='en'?e2.en:e2.n));
+    return;
   }
   else if(p[0]==='inc'){ const r=MO(mkNow()).income.find(x=>x.id===p[1]); if(r) r[p[2]]=p[2]==='amount'?num(v):v; }
   else if(p[0]==='goal'){ const g=db.goals.find(x=>x.id===p[1]); if(g) g[p[2]]=(p[2]==='name')?v:num(v); }

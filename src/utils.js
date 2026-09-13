@@ -162,3 +162,36 @@ export function safeParseBackup(raw){
   }
   return { ok:true, data:data };
 }
+
+/* =========================================================
+   HAPTIC — getaran halus saat menekan tombol
+   Catatan penting: navigator.vibrate TIDAK didukung Safari iOS
+   sampai sekarang. Jadi di iPhone ini tidak berefek apa pun;
+   yang menikmati cuma pengguna Android. Dibiarkan karena
+   biayanya nol dan gagalnya aman.
+   ========================================================= */
+export function hap(ms){
+  try{
+    if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if(navigator && typeof navigator.vibrate === 'function') navigator.vibrate(ms || 10);
+  }catch(e){}
+}
+
+/* =========================================================
+   PROBE FILTER SVG
+   Sebagian browser seluler hemat daya mengabaikan
+   feDisplacementMap. Yang bisa dideteksi andal hanyalah
+   dukungan API-nya, bukan keputusan hemat dayanya — jadi
+   adegan kucing juga diberi lapisan warna polos di
+   belakangnya supaya tidak pernah kosong.
+   ========================================================= */
+export function svgFilterSupported(){
+  try{
+    const el = document.createElementNS('http://www.w3.org/2000/svg','feDisplacementMap');
+    return typeof SVGFEDisplacementMapElement !== 'undefined' &&
+           el instanceof SVGFEDisplacementMapElement;
+  }catch(e){ return false; }
+}
+export function markSvgFilterSupport(){
+  if(!svgFilterSupported()) document.documentElement.classList.add('no-svgfilter');
+}

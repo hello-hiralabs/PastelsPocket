@@ -16,24 +16,53 @@ nyata saat dikembangkan, dan digabung hanya saat mau dikirim.
 
 ```bash
 node rewire.mjs     # hitung ulang semua import dari tabel simbol
-node build.mjs      # kompilasi Tailwind + gabungkan src/ menjadi index.html
-node esm-test.mjs   # jalankan graf modul asli (mencari import yang kurang)
-node css-test.mjs   # pastikan tiap kelas di markup punya wujud di CSS
+node build.mjs      # gabungkan src/ menjadi index.html
+node css-test.mjs   # uji berkas hasil build (tanpa dependensi apa pun)
 ```
 
-Sekali saja di awal: `npm install` (butuh `tailwindcss` untuk build,
-`jsdom` untuk esm-test).
+**Ketiganya jalan tanpa `npm install`.** `tw.css` (hasil kompilasi Tailwind)
+ikut disimpan di repositori, jadi build tidak bergantung pada jaringan
+maupun paket yang harus diunduh. Ini disengaja: `npm install` adalah
+sumber kegagalan paling sering, dan build tidak seharusnya bergantung
+padanya.
 
-Berkas yang harus diunggah ke hosting: `index.html`, `manifest.webmanifest`,
-`sw.js`, `icon-192.png`, `icon-512.png`.
+`npm install` hanya perlu kalau kamu mau:
 
-Untuk `dev.html` butuh server lokal, karena `file://` menolak modul:
+- **mengubah/menambah kelas Tailwind** — build akan otomatis memperbarui
+  `tw.css` kalau Tailwind CLI terpasang. Kalau tidak, `css-test.mjs`
+  akan memberi tahu kelas mana yang belum ada wujudnya.
+- **menjalankan uji mendalam** — `npm run test:full` menjalankan seluruh
+  graf modul ES6 di jsdom untuk mencari import yang kurang.
+
+Untuk pratinjau `dev.html` (modul ES6 asli) butuh server lokal, karena
+`file://` menolak modul:
 
 ```bash
 python3 -m http.server 8080      # lalu buka http://localhost:8080/dev.html
 ```
 
----
+## Berkas yang dipakai
+
+| Berkas | Untuk apa | Naik ke hosting? |
+|---|---|---|
+| `src/` (24 modul) | kode sumber | tidak |
+| `shell.html` | kerangka HTML + seluruh CSS kustom | tidak |
+| `modules.mjs` | urutan modul (topologis) | tidak |
+| `rewire.mjs` | menulis ulang import dari tabel simbol | tidak |
+| `build.mjs` | menggabungkan jadi `index.html` | tidak |
+| `css-test.mjs` | uji kelas CSS + keutuhan bundle | tidak |
+| `esm-test.mjs` | uji graf modul (butuh jsdom) | tidak |
+| `tailwind.config.js`, `tw-input.css` | sumber kompilasi Tailwind | tidak |
+| `tw.css` | hasil kompilasi, dipakai build | tidak |
+| `dev.html` | pratinjau modul saat ngoding | tidak |
+| `package.json` | skrip + dependensi opsional | tidak |
+| `.github/workflows/deploy.yml` | build & deploy otomatis | tidak |
+| **`index.html`** | aplikasinya | **ya** |
+| **`manifest.webmanifest`** | PWA | **ya** |
+| **`sw.js`** | offline | **ya** |
+| **`icon-192.png`, `icon-512.png`** | ikon Home Screen | **ya** |
+
+Lima berkas terakhir itu yang disalin workflow ke `_site/`.
 
 ## Urutan modul
 

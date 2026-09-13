@@ -2,7 +2,7 @@ import { t, tf } from '../i18n.js';
 import { clayVars, kName, kindOf } from '../constants.js';
 import { clamp, esc, fmt, ico, mkNow, num, rp, rpS, stk } from '../utils.js';
 import { db, tapeStyle, ui } from '../state.js';
-import { sums, totalSaved } from '../calc.js';
+import { envNom, envSpent, sums, totalSaved } from '../calc.js';
 import { cardHead } from './header.js';
 
 /* =========================================================
@@ -93,6 +93,22 @@ export function viewSave(){
       '<div class="inline-block mb-3">'+stk('honey-pot',{size:70,ic:42,tone:'#EFDCD1',rot:-4,fb:'🫙'})+'</div>'+
       '<p class="hand text-[15px] font-bold mb-1">'+t('Belum ada celengan nih')+'</p>'+
       '<p class="text-[12.5px] text-soft">'+t('Bikin satu wishlist dulu yuk, biar nabungnya ada tujuannya 💖')+'</p></section>';
+  }
+
+  /* Jembatan ke amplop: alokasi bulan ini vs yang sudah benar-benar disetor.
+     Sengaja butuh satu ketukan — alokasi itu rencana, setoran itu uang. */
+  const alokasi=envNom('save',sums(mkNow()).masuk);
+  const tersetor=envSpent(mkNow(),'save');
+  const sisaAlok=Math.max(0,alokasi-tersetor);
+  if(alokasi>0){
+    html+='<section class="paper tape p-4 pt-5 mb-4" style="'+tapeStyle('main','24px',78,-4)+';background:#FFFAEA;border-color:#F7E7B8">'+
+      cardHead(t('Celengan Impian 💰'),'money-bag','#F7E7B8','💰')+
+      '<p class="hand text-[12.5px] font-bold mb-0.5" style="color:#786557">'+esc(tf('Alokasi amplop celengan bulan ini {0}',rp(alokasi)))+'</p>'+
+      '<p class="text-[11.5px] text-soft mb-3">'+esc(tf('Belum disetor ke celengan: {0}',rp(sisaAlok)))+'</p>'+
+      (sisaAlok>0
+        ? '<button data-act="setor-alokasi" class="clay clay-gold w-full py-3 hand font-bold text-[14.5px]">'+t('Setor Alokasi ke Celengan')+'</button>'
+        : '<p class="hand text-[12.5px] text-center" style="color:#5D7C58">'+t('Alokasi celengan sudah tersetor semua ✨')+'</p>')+
+    '</section>';
   }
 
   html+='<button data-act="add-goal" class="w-full py-4 mb-3 rounded-[26px] dashed bg-white/70 hand font-bold text-[15px] text-soft active:scale-[.98] transition">'+t('+ Bikin Celengan Baru')+'</button>';

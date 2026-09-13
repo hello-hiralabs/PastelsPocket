@@ -33,7 +33,7 @@ export var CAT_COL = { lux:'#A3C79B', chill:'#C0DCB4', watch:'#F5D96B', box:'#FF
    --------------------------------------------------------- */
 export var CAT_KINDS = [
   { id:'mochi', n:'Mochi', en:'Mochi', jenis:'Persia putih', ejenis:'White Persian',
-    fur:'#FFFFFF', fur2:'#F6EAE6', shade:'#E8D5D2', line:'#C9758A',
+    fur:'#FFFFFF', fur2:'#F6EAE6', shade:'#E8D5D2', line:'#A66172',
     ear:'#FFC0D3', eye:'#93AEC2', pupil:'round', nose:'#E8908F',
     face:'flat', ears:'small', build:'chonk', fluff:3.2, tail:'plume', mark:'plain',
     tone:'#FFD9E4', room:'susu' },
@@ -88,8 +88,8 @@ export var ROOMS = {
   /* kamar bawaan Mochi, diselaraskan ke palet strawberry-matcha */
   susu:   { nama:'Kamar Susu', en:'Milk Room',
             wall:'#FFF3F6', wall2:'#FFE7EE', floor:'#FFF7EC', tile:'#F6E6D8',
-            line:'#C9758A', seat:'sofa', seatA:'#FFC0D3', seatB:'#FFAEC2', seatLine:'#D4788F',
-            wood:'#E0B894', glow:'#FFF3CD', ink:'#8C7F7E', dark:false },
+            line:'#A66172', seat:'sofa', seatA:'#FFC0D3', seatB:'#FFAEC2', seatLine:'#D4788F',
+            wood:'#E0B894', glow:'#FFF3CD', ink:'#7E7271', dark:false },
   loteng: { nama:'Loteng Malam', en:'Night Attic',
             wall:'#3F4C45', wall2:'#35413B', floor:'#2A302D', tile:'#333C38',
             line:'#A3C79B', seat:'wing', seatA:'#E79FAC', seatB:'#D4899A', seatLine:'#F3C3CD',
@@ -104,7 +104,7 @@ export var ROOMS = {
             wood:'#E0B894', glow:'#FFF3CD', ink:'#5D93A8', dark:false },
   teh:    { nama:'Kamar Teh', en:'Tea Room',
             wall:'#E4EFE0', wall2:'#CFE0C8', floor:'#F0E6CE', tile:'#DCCBAA',
-            line:'#7FA878', seat:'papasan', seatA:'#DCBC8E', seatB:'#C5A474', seatLine:'#8A6E48',
+            line:'#5D7C58', seat:'papasan', seatA:'#DCBC8E', seatB:'#C5A474', seatLine:'#8A6E48',
             wood:'#A98457', glow:'#FFF3CD', ink:'#5F7A5A', dark:false },
   roti:   { nama:'Sudut Roti', en:'Bakery Nook',
             wall:'#FFF3CD', wall2:'#F7E3AC', floor:'#FFF7EC', tile:'#F0DCBE',
@@ -231,7 +231,7 @@ export function catEars(C, F){
    ========================================================= */
 export function catEyes(C, F, mode){
   var ex = F.hw * .44, ey = -F.hh * .04, r = F.er;
-  var garis = (C.mark === 'solid' || C.mark === 'point') ? '#FFFDF9' : '#8C7F7E';
+  var garis = (C.mark === 'solid' || C.mark === 'point') ? '#FFFDF9' : '#7E7271';
   var o = '', i;
   if(mode === 'tidur' || mode === 'senang'){
     for(i = 0; i < 2; i++){
@@ -558,7 +558,7 @@ export function roomKayu(R, st, U){
   o += frameArt(R, 230, 26, '#A3C79B');
   o += '<g transform="translate(292,0)">' +
     pth('M-15 118 h30 l-5 26 h-20 z', '#E8A392', R.line, 2.2) +
-    strk('M0 118 V88', '#7FA878', 2.6) +
+    strk('M0 118 V88', '#5D7C58', 2.6) +
     pth('M0 96 C-18 94 -26 78 -14 70 C-2 72 2 86 0 96 Z', '#A3C79B', R.line, 1.8) +
     pth('M0 92 C16 88 24 72 12 66 C1 70 -2 82 0 92 Z', '#C0DCB4', R.line, 1.8) +
     pth('M0 84 C-12 76 -10 62 2 60 C10 66 8 78 0 84 Z', '#8FB886', R.line, 1.8) + '</g>';
@@ -620,7 +620,7 @@ export function roomTeh(R, st, U){
       strk('M0 -6 V14', R.line, 1.6) +
       '<ellipse cx="0" cy="28" rx="16" ry="14" fill="#FFDFC4" stroke="' + R.line + '" stroke-width="2.4"/>' +
       strk('M-15 22 H15 M-16 28 H16 M-15 34 H15', R.line, 1.4, ' opacity=".5"') +
-      strk('M0 42 V50', '#C9758A', 2) + '</g></g>';
+      strk('M0 42 V50', '#A66172', 2) + '</g></g>';
   }
   o += '<g transform="translate(294,0)">' +
     pth('M-14 112 h28 l-4 20 h-20 z', '#A98457', R.line, 2.2) +
@@ -880,6 +880,10 @@ export function catScene(st, catId){
       '<clipPath id="cp' + U + '"><rect x="0" y="0" width="' + W + '" height="' + H + '"/></clipPath>' +
     '</defs>' +
     '<g clip-path="url(#cp' + U + ')">' +
+      /* Jaring pengaman: kalau filter gagal dirender, ruangan tidak jadi
+         kotak kosong — warna dinding & lantai sudah ada di bawahnya. */
+      '<rect x="-12" y="-12" width="344" height="' + (HOR + 12) + '" fill="' + R.wall + '"/>' +
+      '<rect x="-12" y="' + HOR + '" width="344" height="80" fill="' + R.floor + '"/>' +
       '<g filter="url(#wb' + U + ')">' + bg + '</g>' +
       fg + tint + grain +
     '</g></svg>';

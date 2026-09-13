@@ -4,6 +4,7 @@ import { $, esc, mkNow, num, stk, today } from '../utils.js';
 import { db, ui } from '../state.js';
 import { save } from '../data-service.js';
 import { allowance, spentOn, sums } from '../calc.js';
+import { catAvatar } from '../mascot.js';
 
 /* =========================================================
    9. HEADER
@@ -41,12 +42,17 @@ export function renderHeader(){
   const sub={home:'Yuk cek dompet kamu',save:'Wishlist kamu nungguin',badge:'Koleksi stiker kamu',recap:'Rekap bulan ini'}[ui.tab];
   $('#hdr').innerHTML=
     '<div class="flex items-center gap-2.5">'+
-      '<button data-act="mascot" aria-label="Ganti sapaan" class="stk-press shrink-0 hop">'+
-        stk(ava[0],{size:52,ic:32,tone:'#FFD2E0',rot:-4,round:true,fb:ava[1]})+'</button>'+
-      '<div class="bubble flex-1 min-w-0">'+
+      /* Ikon kucing = pemicu ganti tema kucing (permintaan: dipindah ke sini).
+         Isinya wajah kucing yang sedang dipakai, bukan avatar Fluent. */
+      '<button data-act="kitty" aria-label="'+esc(t('Ganti Kucing 🐾'))+'" class="stk-press shrink-0 hop relative">'+
+        '<span class="stk" style="--tone:#FFD2E0;--rot:-4deg;width:52px;height:52px;border-radius:999px;overflow:hidden">'+
+          catAvatar(db.profile.cat)+'</span>'+
+        '<span class="absolute -bottom-0.5 -right-0.5 w-[18px] h-[18px] rounded-full grid place-items-center text-[9px]" style="background:#FFF3CD;border:2px solid #F7E7B8">🐾</span>'+
+      '</button>'+
+      '<button data-act="mascot" aria-label="'+esc(t('Ganti sapaan'))+'" class="bubble flex-1 min-w-0 text-left">'+
         '<p class="hand font-semibold text-[12.5px] leading-snug clamp2">'+esc(mascotLine())+'</p>'+
         '<p class="text-[10px] text-soft leading-tight truncate">'+esc(t(sub))+'</p>'+
-      '</div>'+
+      '</button>'+
       '<div class="flex flex-col gap-1.5 shrink-0">'+
         '<div class="langpill">'+
           '<button data-act="lang" data-l="id" aria-pressed="'+(LANG==='id')+'"><span>🇮🇩</span>ID</button>'+

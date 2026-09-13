@@ -31,6 +31,7 @@ export function seed(){
     stats:{pagi:false,iritDay:false},
     washi:{ owned:['yellow','pink'], main:'yellow', goal:'pink' },
     env:{ bills:{pct:50,nom:null}, wants:{pct:30,nom:null}, save:{pct:20,nom:null} },
+    catEnv:Object.fromEntries(CATS.map(c=>[c.k,c.env])),
     dayLimit:{},
     recurring:[
       { id:uid(), label:'Kos bulanan',  amount:1200000, cat:'kos', day:1, active:true, lastRun:'' },
@@ -111,6 +112,13 @@ export function migrate(d){
     const cur=ev[e.k]||{};
     d.env[e.k]={ pct: cur.pct==null?e.def:clamp(num(cur.pct),0,100),
                  nom: (cur.nom==null||cur.nom==='')?null:num(cur.nom) };
+  });
+  /* pemetaan kategori -> amplop; nilai asing dibuang ke bawaannya */
+  const ce=(d.catEnv&&typeof d.catEnv==='object')?d.catEnv:{};
+  d.catEnv={};
+  CATS.forEach(c=>{
+    const v=ce[c.k];
+    d.catEnv[c.k]=(v==='bills'||v==='wants'||v==='save')?v:c.env;
   });
   d.dayLimit=(d.dayLimit&&typeof d.dayLimit==='object')?d.dayLimit:{};
   /* buang kunci tanggal yang tidak wajar supaya tidak mengacaukan limit harian */

@@ -31,7 +31,8 @@ export const ENVS=[
 ];
 export const EMAP=Object.fromEntries(ENVS.map(e=>[e.k,e]));
 export const CAT_ENV=Object.fromEntries(CATS.map(c=>[c.k,c.env]));
-export const envOfCat=k=> k==='celengan' ? 'save' : (CAT_ENV[k]||'wants');
+/* envOfCat pindah ke calc.js karena sekarang membaca db.catEnv
+   (pemetaan yang bisa diubah pengguna); constants tidak boleh impor state */
 export const catOf=k=> k==='celengan'?CELENGAN:(CATMAP[k]||CATS[CATS.length-1]);
 
 /* Setiap jenis celengan punya tema warnanya sendiri:
@@ -39,7 +40,7 @@ export const catOf=k=> k==='celengan'?CELENGAN:(CATMAP[k]||CATS[CATS.length-1]);
 export const GOAL_KINDS=[
   { i:'admission-tickets', f:'🎟️', n:'Konser & Tiket',   en:'Tickets & Shows',   tone:'#FFC2BE', solid:'#F08C82', soft:'#FFF6F8', dark:'#D26F66' },
   { i:'lipstick',          f:'💄', n:'Skincare & Makeup',en:'Beauty',            tone:'#F9C2DA', solid:'#E177AC', soft:'#FFF3F7', dark:'#C25E92' },
-  { i:'handbag',           f:'👜', n:'Tas & Aksesori',   en:'Bags & Accessories',tone:'#E8CFA9', solid:'#C29A5C', soft:'#FBF6EC', dark:'#8A7565' },
+  { i:'handbag',           f:'👜', n:'Tas & Aksesori',   en:'Bags & Accessories',tone:'#E8CFA9', solid:'#C29A5C', soft:'#FBF6EC', dark:'#786557' },
   { i:'mobile-phone',      f:'📱', n:'Gadget',           en:'Gadgets',           tone:'#C6D2EA', solid:'#7A90C6', soft:'#F7F6F2', dark:'#6076A9' },
   { i:'airplane',          f:'✈️', n:'Liburan',          en:'Travel',            tone:'#B4DDF0', solid:'#559FC4', soft:'#EEF7FC', dark:'#3F84A7' },
   { i:'headphone',         f:'🎧', n:'Musik & Audio',    en:'Music & Audio',     tone:'#D5C9F0', solid:'#8D7ECB', soft:'#FBF5F9', dark:'#7265AE' },

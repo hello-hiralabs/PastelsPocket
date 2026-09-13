@@ -19,16 +19,16 @@ export function viewBadge(){
     week+='<div class="flex-1 text-center">'+
       '<div class="h-11 rounded-2xl grid place-items-center" style="background:'+(on?'#fff':'rgba(255,255,255,.45)')+';border:2px solid '+(on?'#FBE49B':'#F8E9EF')+'">'+
         (on?ico('cherry-blossom',20,'🌸'):'<span class="text-[#D6C2CA] font-bold">·</span>')+'</div>'+
-      '<p class="hand text-[10px] text-[#8A7565] mt-1 font-bold">'+HARI_S()[d.getDay()]+'</p></div>';
+      '<p class="hand text-[10px] text-[#786557] mt-1 font-bold">'+HARI_S()[d.getDay()]+'</p></div>';
   }
   html+=
   '<section class="paper tape p-5 pt-6 mb-5" style="'+tapeStyle('main','28px',96,-6)+';background:linear-gradient(160deg,#FFFAEA,#FFF6E2)">'+
     '<div class="flex items-center gap-4">'+
       stk('fire',{size:70,ic:44,tone:'#FBE49B',rot:-4,round:true,fb:'🔥'})+
       '<div class="flex-1">'+
-        '<p class="hand font-bold text-[13px] text-[#8A7565]">'+t('Streak Rajin Nyatet 🔥')+'</p>'+
+        '<p class="hand font-bold text-[13px] text-[#786557]">'+t('Streak Rajin Nyatet 🔥')+'</p>'+
         '<p class="font-extrabold text-[31px] leading-tight">'+esc(tf('{0} hari',num(st.count)))+'</p>'+
-        '<p class="text-[11.5px] text-[#8A7565]">'+esc(tf('Best record kamu {0} hari',num(st.best)))+'</p>'+
+        '<p class="text-[11.5px] text-[#786557]">'+esc(tf('Best record kamu {0} hari',num(st.best)))+'</p>'+
       '</div>'+
     '</div>'+
     '<div class="flex gap-1.5 mt-4">'+week+'</div>'+
@@ -48,7 +48,7 @@ export function viewBadge(){
       '<span class="pin absolute left-1/2 -translate-x-1/2 top-0 z-10"></span>'+
       '<span class="polaroid block" style="transform:rotate('+rot+'deg)">'+
         '<span class="shot block" style="height:62px;background:'+(on?SHOT[i%SHOT.length]:'#F3E7EC')+'">'+
-          (on?ico(b.i,34,b.f):'<span class="hand font-bold text-[20px] text-[#C6B6BA]">?</span>')+'</span>'+
+          (on?ico(b.i,34,b.f):'<span class="hand font-bold text-[20px] text-[#867B7E]">?</span>')+'</span>'+
         '<span class="hand block text-[9.5px] font-bold leading-tight py-1.5 px-0.5 '+(on?'':'text-soft')+'">'+
           esc(on?bName(b):t('Bingkai kosong nunggu diisi'))+'</span>'+
       '</span>'+

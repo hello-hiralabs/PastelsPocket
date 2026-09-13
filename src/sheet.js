@@ -45,7 +45,7 @@ export function celebrateWashi(w){
   confetti(true);
   sheet(
     '<div class="text-center pb-3 pt-1">'+
-      '<p class="hand text-[13.5px] font-bold text-[#8A7565] mb-3 tracking-wide">'+t('HADIAH BARU KEBUKA! 🎉')+'</p>'+
+      '<p class="hand text-[13.5px] font-bold text-[#786557] mb-3 tracking-wide">'+t('HADIAH BARU KEBUKA! 🎉')+'</p>'+
       '<div class="pop mx-auto mb-4 px-5 py-4 rounded-[24px] bg-white" style="border:2.5px solid '+w.tone+';box-shadow:0 4px 0 '+w.tone+'">'+
         '<div class="swatch mb-3" style="background:'+w.bg+';transform:rotate(-2deg)"></div>'+
         '<div class="swatch" style="background:'+w.bg+';transform:rotate(1.5deg)"></div>'+

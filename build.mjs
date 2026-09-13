@@ -30,13 +30,30 @@ if(bocor){
   bundle = bundle.replace(/<\/script/gi, '<\\/script');
   console.warn('  penjaga: ' + bocor + " penutup '</script' di-escape");
 }
-/* ---- Tailwind dikompilasi, bukan lewat CDN ----
-   Menghilangkan FOUC (halaman tidak lagi tampil tanpa gaya sesaat)
-   dan membuat aplikasi bisa jalan penuh tanpa jaringan. */
-execSync('npx tailwindcss -c tailwind.config.js -i tw-input.css -o .tw-out.css --minify',
-  { stdio: ['ignore','ignore','inherit'] });
-const tw = fs.readFileSync('.tw-out.css','utf8');
-console.log('  tailwind:', (tw.length/1024).toFixed(0)+' KB terkompilasi');
+/* ---- Tailwind: hasil kompilasi disimpan sebagai tw.css ----
+   tw.css IKUT DISIMPAN di repositori. Artinya build tidak butuh
+   npm install, tidak butuh jaringan, dan tidak bisa gagal karena
+   paket yang belum terpasang.
+
+   Kalau Tailwind CLI kebetulan tersedia (habis `npm install`),
+   tw.css diperbarui dulu supaya kelas baru ikut terkompilasi.
+   Kalau tidak ada, tw.css yang tersimpan dipakai apa adanya. */
+const cli = 'node_modules/.bin/tailwindcss';
+if(fs.existsSync(cli)){
+  try{
+    execSync(cli + ' -c tailwind.config.js -i tw-input.css -o tw.css --minify',
+      { stdio: ['ignore','ignore','inherit'] });
+    console.log('  tailwind: tw.css diperbarui dari sumber');
+  }catch(e){
+    console.warn('  tailwind: gagal memperbarui, pakai tw.css yang tersimpan');
+  }
+} else {
+  console.log('  tailwind: pakai tw.css tersimpan (CLI tidak terpasang)');
+}
+if(!fs.existsSync('tw.css'))
+  throw new Error('tw.css tidak ada. Jalankan `npm install` lalu `npm run build` sekali untuk membuatnya.');
+const tw = fs.readFileSync('tw.css','utf8');
+console.log('  tailwind:', (tw.length/1024).toFixed(0)+' KB');
 
 let out = shell.replace('/*__BUNDLE__*/', () => bundle);
 out = out.replace('/*__TAILWIND__*/', () => tw);
