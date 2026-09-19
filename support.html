@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dukungan — Pastels</title>
+<meta name="description" content="Bantuan untuk Pastels : Your Pocket Bestie — backup, pindah HP, jatah harian, dan cara menghubungi kami.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Shantell+Sans:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FFFDF9; --card:#FFFFFF; --line:#F3E7EA;
+    --ink:#5A4E4D; --ink2:#786557; --ink3:#716463;
+    --brand:#FFC0D3; --brand-tint:#FFE7EE; --brand-ink:#9A5368;
+    --warn-tint:#FFF3CD; --warn:#F5D96B; --warn-ink:#7E5E0C;
+    --radius:20px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --paper:#1F1A1C; --card:#2A2427; --line:#3A3235;
+      --ink:#F6EEF0; --ink2:#CDBFC3; --ink3:#A89A9E;
+      --brand:#FFB3C8; --brand-tint:#3A2A30; --brand-ink:#FFB3C8;
+      --warn-tint:#353019; --warn:#F2D478; --warn-ink:#F2D478; }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:"Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    font-weight:500; font-size:17px; line-height:1.65;
+    background-image:repeating-linear-gradient(transparent, transparent 31px, var(--line) 31px, var(--line) 32px);
+  }
+  .wrap{max-width:660px; margin:0 auto; padding:32px 20px 80px}
+  .tape{display:inline-block; padding:6px 22px; transform:rotate(2deg);
+    background:repeating-linear-gradient(45deg,var(--brand-tint),var(--brand-tint) 7px,var(--brand) 7px,var(--brand) 14px);
+    border-radius:3px; font-size:13px; font-weight:700; color:var(--brand-ink)}
+  h1{font-family:"Shantell Sans",cursive; font-weight:700; font-size:34px; line-height:1.15; margin:16px 0 4px; letter-spacing:-.4px}
+  .sub{color:var(--ink3); font-size:14px; margin:0}
+  .langs{display:flex; gap:8px; margin:20px 0 0}
+  .langs button{font:inherit; font-size:14px; font-weight:700; cursor:pointer; padding:8px 16px; border-radius:14px;
+    color:var(--ink); background:var(--card); border:1px solid var(--line); box-shadow:0 3px 0 var(--line)}
+  .langs button[aria-pressed="true"]{background:var(--brand); border-color:var(--brand); color:#5A4E4D; box-shadow:0 3px 0 var(--brand-ink)}
+  .langs button:focus-visible{outline:3px solid var(--brand-ink); outline-offset:2px}
+  h2{font-family:"Shantell Sans",cursive; font-weight:600; font-size:22px; margin:36px 0 10px; letter-spacing:-.2px}
+  p,li{color:var(--ink2)}
+  li{margin-bottom:6px}
+  strong{color:var(--ink)}
+  details{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:14px 18px; margin:10px 0}
+  details[open]{box-shadow:0 3px 0 var(--line)}
+  summary{cursor:pointer; font-weight:700; color:var(--ink); list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+"; float:right; color:var(--brand-ink); font-weight:700}
+  details[open] summary::after{content:"–"}
+  details p{margin:10px 0 2px}
+  .contact{background:var(--warn-tint); border:1px solid var(--warn); border-radius:var(--radius); padding:20px 22px; margin:28px 0}
+  .contact h2{margin-top:0; color:var(--warn-ink)}
+  .contact p{color:var(--warn-ink)}
+  a{color:var(--brand-ink); text-underline-offset:3px}
+  footer{margin-top:48px; padding-top:20px; border-top:1px solid var(--line); font-size:14px; color:var(--ink3)}
+  [hidden]{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="tape">Pastels</span>
+    <h1 data-id="Butuh bantuan?" data-en="Need a hand?">Butuh bantuan?</h1>
+    <p class="sub">Pastels : Your Pocket Bestie</p>
+    <div class="langs">
+      <button type="button" data-lang="id" aria-pressed="true">Bahasa Indonesia</button>
+      <button type="button" data-lang="en" aria-pressed="false">English</button>
+    </div>
+  </header>
+
+  <!-- ===== INDONESIA ===== -->
+  <section lang="id" data-section="id">
+    <div class="contact">
+      <h2>Hubungi kami</h2>
+      <p>Kirim email ke <a href="mailto:hello@hiralabs.net">hello@hiralabs.net</a>. Kami biasanya membalas dalam 2–3 hari kerja.</p>
+      <p>Supaya cepat ditangani, sebutkan: tipe iPhone dan versi iOS, versi Pastels (ada di Pengaturan), apa yang kamu lakukan sebelum masalah muncul, dan screenshot bila ada. <strong>Jangan kirim berkas backup-mu</strong> kecuali kami memintanya.</p>
+    </div>
+
+    <h2>Pertanyaan yang sering muncul</h2>
+
+    <details>
+      <summary>Data saya hilang setelah ganti HP</summary>
+      <p>Catatan Pastels tersimpan di perangkat, bukan di akun. Kalau HP lama masih ada, buka Pengaturan → Backup, simpan berkasnya, lalu pulihkan di HP baru. Untuk seterusnya, nyalakan sinkronisasi iCloud supaya perpindahan berikutnya otomatis.</p>
+    </details>
+
+    <details>
+      <summary>Bagaimana cara backup dan memulihkan data?</summary>
+      <p>Buka Pengaturan → Backup. Simpan berkas JSON itu di tempat yang aman, misalnya Files atau email ke diri sendiri. Untuk memulihkan, pilih Pulihkan lalu pilih berkas tersebut. Memulihkan akan menggantikan data yang sekarang ada.</p>
+    </details>
+
+    <details>
+      <summary>Angka jatah harian saya dari mana?</summary>
+      <p>Jatah dihitung dari sisa amplop "keinginan" bulan ini dibagi sisa hari. Jatah dikunci di awal hari, jadi yang berkurang saat kamu jajan adalah sisa hari ini, bukan jatahnya. Sisa yang tidak terpakai otomatis terbagi ke hari-hari berikutnya.</p>
+    </details>
+
+    <details>
+      <summary>Kenapa jatah saya Rp 0?</summary>
+      <p>Biasanya karena pemasukan bulan ini belum diisi, atau amplop keinginan sudah terpakai habis. Cek layar Pemasukan &amp; Amplop. Kamu juga bisa menetapkan limit harian sendiri untuk hari tertentu.</p>
+    </details>
+
+    <details>
+      <summary>Isi celengan mengurangi jatah jajan saya?</summary>
+      <p>Tidak. Setoran celengan masuk amplop tabungan, bukan amplop keinginan. Setiap setoran tetap muncul di riwayat, dan menyuntingnya akan ikut menyesuaikan saldo celengan.</p>
+    </details>
+
+    <details>
+      <summary>Saya menghapus celengan, tapi setorannya masih ada di riwayat</summary>
+      <p>Itu memang disengaja. Uang yang sudah kamu sisihkan tetap tercatat sebagai kejadian nyata, jadi ringkasan bulananmu tidak berubah diam-diam.</p>
+    </details>
+
+    <details>
+      <summary>Bagaimana cara mengganti bahasa?</summary>
+      <p>Pengaturan → Bahasa. Pilihan bawaannya mengikuti bahasa perangkatmu, dan bisa kamu ganti ke Indonesia atau English.</p>
+    </details>
+
+    <details>
+      <summary>Saya tidak mau nominal terlihat di Lock Screen</summary>
+      <p>Pengaturan → Sembunyikan nominal di Lock Screen. Widget akan tetap menampilkan kucing dan status, tanpa angka. Saat membagikan kartu story, ada pilihan serupa.</p>
+    </details>
+
+    <details>
+      <summary>Cara menghapus semua data saya</summary>
+      <p>Pengaturan → Hapus Semua Data. Tindakan ini tidak bisa dibatalkan, jadi buat backup dulu kalau masih ingin menyimpannya. Kalau iCloud aktif, hapus juga datanya lewat pengaturan iCloud di perangkatmu.</p>
+    </details>
+
+    <details>
+      <summary>Apakah Pastels melihat data keuangan saya?</summary>
+      <p>Tidak. Tidak ada akun dan tidak ada server. Semua catatan ada di perangkatmu, dan iCloud (jika kamu nyalakan) adalah akun pribadimu sendiri. Selengkapnya di <a href="./privacy.html">Kebijakan Privasi</a>.</p>
+    </details>
+
+    <details>
+      <summary>Saya menemukan bug atau punya usulan fitur</summary>
+      <p>Kirim email ke alamat di atas. Kami membaca semuanya, dan usulan dari pengguna sering menjadi fitur berikutnya.</p>
+    </details>
+  </section>
+
+  <!-- ===== ENGLISH ===== -->
+  <section lang="en" data-section="en" hidden>
+    <div class="contact">
+      <h2>Contact us</h2>
+      <p>Email <a href="mailto:hello@hiralabs.net">hello@hiralabs.net</a>. We usually reply within 2–3 working days.</p>
+      <p>To speed things up, include your iPhone model and iOS version, the Pastels version (shown in Settings), what you did just before the problem appeared, and a screenshot if you have one. <strong>Please don't send your backup file</strong> unless we ask for it.</p>
+    </div>
+
+    <h2>Common questions</h2>
+
+    <details>
+      <summary>My data disappeared after switching phones</summary>
+      <p>Pastels stores your notes on the device, not in an account. If you still have the old phone, open Settings → Backup, save the file, then restore it on the new one. To make future moves automatic, turn on iCloud sync.</p>
+    </details>
+
+    <details>
+      <summary>How do I back up and restore?</summary>
+      <p>Open Settings → Backup. Keep the JSON file somewhere safe, such as Files or an email to yourself. To restore, choose Restore and pick that file. Restoring replaces the data currently in the app.</p>
+    </details>
+
+    <details>
+      <summary>Where does my daily allowance come from?</summary>
+      <p>It is what remains in this month's "wants" envelope divided by the days left. The allowance is locked at the start of the day, so spending reduces what's left today rather than the allowance itself. Whatever you don't spend is spread across the coming days.</p>
+    </details>
+
+    <details>
+      <summary>Why is my allowance zero?</summary>
+      <p>Usually because this month's income hasn't been entered yet, or the wants envelope is already used up. Check the Income &amp; Envelopes screen. You can also set your own daily limit for a specific day.</p>
+    </details>
+
+    <details>
+      <summary>Do savings deposits reduce my spending allowance?</summary>
+      <p>No. Deposits go to the savings envelope, not the wants envelope. Each deposit still appears in your history, and editing it adjusts the savings balance too.</p>
+    </details>
+
+    <details>
+      <summary>I deleted a savings goal but the deposits are still in my history</summary>
+      <p>That's intentional. Money you set aside really did leave your wallet, so your monthly summary doesn't change behind your back.</p>
+    </details>
+
+    <details>
+      <summary>How do I change the language?</summary>
+      <p>Settings → Language. It follows your device by default, and you can switch to Indonesian or English.</p>
+    </details>
+
+    <details>
+      <summary>I don't want amounts visible on my Lock Screen</summary>
+      <p>Settings → Hide amounts on Lock Screen. The widget still shows your cat and status, without numbers. A similar option exists when sharing a story card.</p>
+    </details>
+
+    <details>
+      <summary>How do I delete all my data?</summary>
+      <p>Settings → Delete All Data. This cannot be undone, so make a backup first if you want to keep it. If iCloud sync is on, also remove the data in your device's iCloud settings.</p>
+    </details>
+
+    <details>
+      <summary>Can Pastels see my finances?</summary>
+      <p>No. There are no accounts and no servers. Everything stays on your device, and iCloud — if you turn it on — is your own private account. More in the <a href="./privacy.html">Privacy Policy</a>.</p>
+    </details>
+
+    <details>
+      <summary>I found a bug or have a feature idea</summary>
+      <p>Email the address above. We read everything, and user suggestions often become the next feature.</p>
+    </details>
+  </section>
+
+  <footer>
+    <p><a href="./privacy.html" data-id="Kebijakan privasi" data-en="Privacy policy">Kebijakan privasi</a> · <a href="./" data-id="Buka Pastels versi web" data-en="Open Pastels on the web">Buka Pastels versi web</a></p>
+    <p>© 2026 HiraLabs</p>
+  </footer>
+</div>
+
+<script>
+  const buttons = document.querySelectorAll('.langs button');
+  function setLang(lang){
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-section]').forEach(s => s.hidden = s.dataset.section !== lang);
+    document.querySelectorAll('[data-id][data-en]').forEach(el => el.textContent = el.dataset[lang]);
+    buttons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
+  }
+  buttons.forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
+  if ((navigator.language || '').toLowerCase().startsWith('en')) setLang('en');
+</script>
+</body>
+</html>

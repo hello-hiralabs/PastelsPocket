@@ -1,52 +1,73 @@
-/* =========================================================
-   SERVICE WORKER
-   ---------------------------------------------------------
-   Strategi sengaja dibedakan per jenis berkas:
-   · Cangkang aplikasi (index.html) -> network-first.
-     Kalau online, selalu ambil versi terbaru, jadi pengguna
-     tidak terjebak di versi lama setelah kamu deploy.
-     Kalau offline, pakai salinan cache.
-   · Aset pihak ketiga (font, ikon) -> cache-first.
-     Isinya tidak berubah, jadi tidak perlu dicek tiap kali.
-   ========================================================= */
-const VERSI = 'pastels-v1';
-const INTI = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
+/* Pastels — service worker
+   Strategi:
+   - Navigasi (membuka aplikasi): jaringan dulu, cache sebagai cadangan.
+     Dengan begitu pembaruan index.html langsung terpakai, dan aplikasi tetap
+     terbuka saat offline.
+   - Aset milik sendiri (ikon, manifest): cache dulu, lalu diperbarui diam-diam.
+   - Permintaan ke domain lain (font, ikon Iconify, Supabase): tidak disentuh.
 
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(VERSI).then(c => c.addAll(INTI)).then(() => self.skipWaiting()));
+   PENTING: naikkan VERSI setiap kali index.html diperbarui, supaya cache lama
+   dibuang dan pengguna tidak tertinggal di versi sebelumnya.
+*/
+const VERSI = 'pastels-v1';
+const SHELL = [
+  './',
+  './index.html',
+  './manifest.webmanifest',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-512-maskable.png'
+];
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(VERSI)
+      .then(cache => cache.addAll(SHELL))
+      .then(() => self.skipWaiting())
+      .catch(() => self.skipWaiting())
+  );
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(
+self.addEventListener('activate', event => {
+  event.waitUntil(
     caches.keys()
-      .then(ks => Promise.all(ks.filter(k => k !== VERSI).map(k => caches.delete(k))))
+      .then(kunci => Promise.all(kunci.filter(k => k !== VERSI).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
 
-self.addEventListener('fetch', e => {
-  const req = e.request;
-  if(req.method !== 'GET') return;
-  const url = new URL(req.url);
-  const samaAsal = url.origin === self.location.origin;
-  const cangkang = samaAsal && (url.pathname.endsWith('/') || url.pathname.endsWith('.html'));
+self.addEventListener('fetch', event => {
+  const req = event.request;
+  if (req.method !== 'GET') return;
 
-  if(cangkang){
-    e.respondWith(
-      fetch(req).then(res => {
-        caches.open(VERSI).then(c => c.put(req, res.clone()));
-        return res;
-      }).catch(() => caches.match(req).then(r => r || caches.match('./index.html')))
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
+
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req)
+        .then(res => {
+          const salinan = res.clone();
+          caches.open(VERSI).then(c => c.put('./index.html', salinan));
+          return res;
+        })
+        .catch(() => caches.match('./index.html').then(r => r || caches.match('./')))
     );
     return;
   }
 
-  e.respondWith(
-    caches.match(req).then(hit => hit || fetch(req).then(res => {
-      /* hanya simpan respons yang benar-benar berhasil */
-      if(res && (res.ok || res.type === 'opaque'))
-        caches.open(VERSI).then(c => c.put(req, res.clone()));
-      return res;
-    }).catch(() => hit))
+  event.respondWith(
+    caches.match(req).then(cached => {
+      const jaringan = fetch(req)
+        .then(res => {
+          if (res && res.status === 200) {
+            const salinan = res.clone();
+            caches.open(VERSI).then(c => c.put(req, salinan));
+          }
+          return res;
+        })
+        .catch(() => cached);
+      return cached || jaringan;
+    })
   );
 });
