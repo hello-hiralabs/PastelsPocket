@@ -41,7 +41,7 @@ jobs:
       - name: Siapkan folder situs
         run: |
           mkdir -p _site
-          cp index.html manifest.webmanifest sw.js icon-192.png icon-512.png _site/
+          cp index.html manifest.webmanifest sw.js icon-192.png icon-512.png icon-512-maskable.png privacy.html support.html _site/
 
       - uses: actions/upload-pages-artifact@v3
         with:
